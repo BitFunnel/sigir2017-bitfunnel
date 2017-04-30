@@ -1,5 +1,6 @@
 import errno
 import os
+import platform
 import shutil
 import stat
 import subprocess
@@ -59,12 +60,16 @@ class Builder:
 
         input = os.path.join(self.temp, chunk, "*.txt")
         output = os.path.join(self.temp, chunk + ".collection")
-        args = ("dir /s/b {0} | "
-                "java -cp {1} "
+        if (platform.system() == 'Windows'):
+            command = "dir /s/b"
+        else:
+            command = "find ."
+        args = ("{0} {1} | "
+                "java -cp {2} "
                 "it.unimi.di.big.mg4j.document.TRECDocumentCollection "
                 "-f HtmlDocumentFactory "
                 "-p encoding=iso-8859-1 "
-                "{2}").format(input, self.classpath, output);
+                "{3}").format(command, input, self.classpath, output);
 
         print(args)
 
