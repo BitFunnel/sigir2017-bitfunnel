@@ -1,23 +1,26 @@
 import errno
 import os
 import platform
+import queue
 import shutil
 import stat
+import threading
 from bf_utilities import run
 
 
 class Builder:
-    def __init__(self, gov2, root, mg4j, bitfunnel, min_postings, max_postings):
+    def __init__(self, gov2, root, mg4j, bitfunnel, min_postings, max_postings, thread_id):
         self.gov2 = gov2
         self.root = root
         self.mg4j = mg4j
         self.bitfunnel = bitfunnel
         self.min_postings = min_postings
         self.max_postings = max_postings
+        self.thread_id = thread_id
 
         # Use a slightly unusual temp file name to protect against accidental
         # deletions of other directories with the same name.
-        self.temp = os.path.join(root, "tempxxx");
+        self.temp = os.path.join(root, "tempxxx-{0}".format(self.thread_id));
         self.chunkdir = os.path.join(root, "chunks")
         self.classpath = os.path.join(self.mg4j, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
 
@@ -89,14 +92,14 @@ class Builder:
     def create_filtered_chunk(self, chunk):
         manifest = os.path.join(self.temp, "manifest.txt")
         args = ("{0} filter {1} {2} -size {3} {4}").format(
-            self.bitfunnel, manifest, self.chunkdir, self.min_postings, self.max_postings)
+            self.bitfunnel, manifest, self.temp, self.min_postings, self.max_postings)
         print(args)
 
         run(args, self.temp);
 
 
     def rename_filtered_chunk(self, chunk):
-        old_name = os.path.join(self.chunkdir, "Chunk-0.chunk")
+        old_name = os.path.join(self.temp, "Chunk-0.chunk")
         new_name = os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings))
         os.rename(old_name, new_name)
 
@@ -128,6 +131,14 @@ class Builder:
         self.cleanup()
 
 
+    def worker(self, queue):
+        while True:
+            chunk = queue.get()
+            if chunk is None:
+                break
+            self.process_one_chunk(chunk)
+            queue.task_done()
+
     def go(self):
         basenames = [os.path.splitext(f)[0] for f in os.listdir(self.gov2) if os.path.isfile(os.path.join(self.gov2, f)) and f.endswith('.7z')]
 
@@ -136,11 +147,44 @@ class Builder:
         for chunk in basenames:
             self.process_one_chunk(chunk)
 
-builder = Builder(r"d:\data\gov2",
-                  r"d:\temp",
-#                  r"d:\sigir",
-                  r"D:\git\mg4j-workbench",
-                  r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-                  100,
-                  150);
-builder.go();
+
+def process_chunk_list(gov2, root, mg4j, bitfunnel, min_postings, max_postings, thread_count):
+    q = queue.Queue()
+
+    basenames = [os.path.splitext(f)[0] for f in os.listdir(gov2) if
+                 os.path.isfile(os.path.join(gov2, f)) and f.endswith('.7z')]
+
+    print("Processing {0} chunks.".format(len(basenames)))
+
+    for name in basenames:
+        q.put(name)
+
+    print("Starting {0} threads.".format(thread_count))
+
+    for thread_id in range(thread_count):
+        builder = Builder(gov2, root, mg4j, bitfunnel, min_postings, max_postings, thread_id)
+        thread = threading.Thread(target=builder.worker, args = (q, ))
+        thread.start()
+
+    q.join()
+
+    print("All threads finished.")
+
+
+process_chunk_list(r"d:\data\gov2",
+                   r"d:\temp\multi-threaded",
+                   r"D:\git\mg4j-workbench",
+                   r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+                   1000,
+                   1500,
+                   8)
+
+# builder = Builder(r"d:\data\gov2",
+#                   r"d:\temp",
+# #                  r"d:\sigir",
+#                   r"D:\git\mg4j-workbench",
+#                   r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+#                   100,
+#                   150);
+# builder.go();
+
