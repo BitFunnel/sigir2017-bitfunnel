@@ -1,17 +1,6 @@
 import os
 import re
-import subprocess
-
-
-def run(args, working_directory):
-    proc = subprocess.Popen(args, cwd=working_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True);
-    for line in proc.stdout:
-        print(line.decode(), end='')
-    proc.stdout.close()
-    returncode = proc.wait()
-
-    # Ensure we don't get zombie processes. This had been a problem with the 7z decompression.
-    del proc
+from bf_utilities import run
 
 
 class Mg4jIndexFromChunks:
@@ -46,7 +35,7 @@ class Mg4jIndexFromChunks:
         args = ("java -cp {0} "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
                 "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence({1}) "
-                "{2}").format(self.classpath, self.manifest, self.base_name);
+                "{2}").format(self.classpath, self.manifest, self.base_name)
 
         print(args)
 
