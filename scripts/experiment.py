@@ -5,9 +5,9 @@ from bf_utilities import run
 
 def execute(command):
     print(command)
+    run(command, r"D:\temp")
+    print("Finished")
     print()
-    # TODO: reinstate following line
-    # run(command)
 
 
 class Experiment:
@@ -47,7 +47,7 @@ class Experiment:
 
         # BitFunnel variables
         self.bf_repl_script = os.path.join(self.bf_index_path, self.basename + "-repl.script")
-        self.bf_shard_definition = os.path.join(self.bf_index_path, self.basename + "ShardDefinition.csv")
+        self.bf_shard_definition = os.path.join(self.bf_index_path, "ShardDefinition.csv")
 
         # mg4j variables
         self.mg4j_classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
@@ -64,7 +64,7 @@ class Experiment:
         # TODO: mapping to filtered query file is in Java right now. Can this be moved here?
         self.queries_basename = os.path.basename(self.queries)
         self.pef_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-ints.txt")
-        self.filtered_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtreed.txt")
+        self.filtered_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtered.txt")
 
         self.pef_results_file = os.path.join(self.pef_index_path, self.queries_basename + "-results.csv")
         self.mg4j_results_file = os.path.join(self.mg4j_index_path, self.queries_basename + "-results.csv")
@@ -75,6 +75,9 @@ class Experiment:
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
                 "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence({1}) "
                 "{2}").format(self.mg4j_classpath, self.manifest, self.mg4j_basename)
+        if not os.path.exists(self.mg4j_index_path):
+            os.makedirs(self.mg4j_index_path)
+#        run(args, self.mg4j_index_path)
         execute(args)
 
 
@@ -89,6 +92,7 @@ class Experiment:
         execute(args)
 
 
+    # TODO: test this method.
     def build_pef_collection(self):
         if (self.queries is None):
             args = ("java -cp {0} "
@@ -102,6 +106,7 @@ class Experiment:
         execute(args)
 
 
+    # TODO: test this method.
     def build_pef_index(self):
         args = ("{0} {1} {2} {3}").format(self.pef_creator,
                                           self.pef_index_type,
@@ -110,11 +115,13 @@ class Experiment:
         execute(args)
 
 
+    # TODO: test this method.
     def pef_index_from_mg4j_index(params):
         params.build_pef_collection()
         params.build_pef_index()
 
 
+    # TODO: test this method.
     def run_pef_queries(self):
         args = ("{0}{1} {2} {3} {4} {5}").format(self.pef_runner,
                                                self.pef_index_type,
@@ -126,6 +133,14 @@ class Experiment:
 
 
     def build_bf_index(self):
+        if not os.path.exists(self.bf_index_path):
+            os.makedirs(self.bf_index_path)
+
+        # We're currently restricted to a single shard,
+        # so create an empty ShardDefinition file.
+        # TODO: reinstate following line.
+        open(self.bf_shard_definition, "w").close()
+
         # Run statistics builder
         args = ("{0} statistics {1} {2}").format(self.bf_executable,
                                              self.manifest,
@@ -141,39 +156,38 @@ class Experiment:
         execute(args)
 
 
+    # TODO: test this method.
     def run_bf_queries(self):
-        # We're currently restricted to a single shard,
-        # so create an empty ShardDefinition file.
-        # TODO: reinstate following line.
-        # open(self.bf_shard_definition, "w").close()
-
         # Create script file
         # TODO: reinstate following lines.
-        # with open(self.bf_repl_script, "w") as file:
-        file = sys.stdout
-        for i in range(0,1):
-            file.write("load manifest {0}\n".format(self.manifest));
-            file.write("compiler\n");
-            for t in range(1, self.thread_count + 1):
-                results_dir = os.path.join(self.bf_index_path, "results-{0}".format(t))
-                if not os.path.exists(results_dir):
-                    print("mkdir " + results_dir)
-                    # os.makedirs(results_dir)
-                file.write("threads {0}\n".format(t));
-                file.write("cd {0}".format(results_dir))
-                file.write("query log {0}\n".format(self.filtered_query_file));
-                file.write("\n")
+        with open(self.bf_repl_script, "w") as file:
+        # file = sys.stdout
+            for i in range(0,1):
+                file.write("load manifest {0}\n".format(self.manifest));
+                file.write("compiler\n");
+                for t in range(1, self.thread_count + 1):
+                    results_dir = os.path.join(self.bf_index_path, "results-{0}".format(t))
+                    if not os.path.exists(results_dir):
+                        print("mkdir " + results_dir)
+                        os.makedirs(results_dir)
+                    file.write("threads {0}\n".format(t))
+                    file.write("cd {0}\n".format(results_dir))
+                    file.write("query log {0}\n".format(self.filtered_query_file))
+                    file.write("quit\n")
 
         # Start BitFunnel repl
-        args = ("{0} repl {1}").format(self.bf_executable,
-                                       self.bf_index_path)
+        args = ("{0} repl {1} -script {2}").format(self.bf_executable,
+                                                   self.bf_index_path,
+                                                   self.bf_repl_script)
         execute(args)
 
 
+    # TODO: test this method.
     def build_lucene_index(self):
         print("TODO: Implement build_lucene_index")
 
 
+    # TODO: test this method.
     def run_lucene_queries(self):
         print("TODO: Implement run_lucene_queries")
 
@@ -188,32 +202,44 @@ def build_chunk_manifest(chunk_root, pattern, manifest_file):
     for chunk in chunks:
         print(chunk)
 
+    dir = os.path.dirname(manifest_file)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
     with open(manifest_file, 'w') as file:
         for chunk in chunks:
             file.write(chunk + '\n')
 
 
+manifest = r"D:\temp\big\index-10-1000-1500.txt"
+
 experiment = Experiment(
     r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-    r"D:\git\mg4j-workbook",
+    r"D:\git\mg4j-workbench",
     r"/home/mhop/git/partitioned_elias_fano/bin",
-    r"/data/bitfunnel",
-    r"/data/mg4j",
-    r"/data/pef",
-    r"c:\temp\foobar.txt",
+    r"D:\temp\big\bitfunnel",
+    r"D:\temp\big\mg4j",
+    r"D:\temp\big\pef",
+    manifest,
     r"D:\git\mg4j-workbench\data\trec-terabyte\06.efficiency_topics.all"
 )
 
-experiment.build_mg4j_index()
-experiment.run_mg4j_queries()
+# build_chunk_manifest(r"d:\temp\multi-threaded\chunks",
+#                      r"GX00.*",
+#                      manifest)
 
-experiment.pef_index_from_mg4j_index()
-experiment.run_pef_queries()
+def tested():
+    experiment.build_mg4j_index()
+    experiment.run_mg4j_queries()
 
-experiment.build_bf_index()
-experiment.run_bf_queries()
+    experiment.build_bf_index()
+    experiment.run_bf_queries()
 
-experiment.build_lucene_index()
-experiment.run_lucene_queries()
+# experiment.pef_index_from_mg4j_index()
+# experiment.run_pef_queries()
+#
+#
+# experiment.build_lucene_index()
+# experiment.run_lucene_queries()
 
 

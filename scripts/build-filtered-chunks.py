@@ -183,14 +183,5 @@ process_chunk_list(r"d:\data\gov2",
                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
                    1000,
                    1500,
-                   8)
-
-# builder = Builder(r"d:\data\gov2",
-#                   r"d:\temp",
-# #                  r"d:\sigir",
-#                   r"D:\git\mg4j-workbench",
-#                   r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-#                   100,
-#                   150);
-# builder.go();
+                   7)
 
