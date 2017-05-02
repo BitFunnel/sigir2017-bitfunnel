@@ -107,7 +107,7 @@ class Builder:
     def cleanup(self):
         print("Cleaning up")
         if os.path.exists(self.temp):
-            if (self.temp.endswith("tempxxx")):
+            if (self.temp.startwith("tempxxx")):
                 def handleRemoveReadonly(func, path, exc):
                     excvalue = exc[1]
                     if excvalue.errno == errno.EACCES:
@@ -121,14 +121,20 @@ class Builder:
 
     def process_one_chunk(self, chunk):
         print("Building chunk " + chunk)
-        self.make_temp_dir()
-        self.decompress(chunk)
-        self.build_collection(chunk)
-        self.create_chunk(chunk)
-        self.create_chunk_manifest(chunk)
-        self.create_filtered_chunk(chunk)
-        self.rename_filtered_chunk(chunk)
-        self.cleanup()
+
+        chunk_name = os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings));
+
+        # Only build chunk if it doesn't already exist.
+        # This helps with restarting long runs that fail in the middle.
+        if (not os.path.exists(chunk_name)):
+            self.make_temp_dir()
+            self.decompress(chunk)
+            self.build_collection(chunk)
+            self.create_chunk(chunk)
+            self.create_chunk_manifest(chunk)
+            self.create_filtered_chunk(chunk)
+            self.rename_filtered_chunk(chunk)
+            self.cleanup()
 
 
     def worker(self, queue):
