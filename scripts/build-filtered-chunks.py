@@ -107,7 +107,7 @@ class Builder:
     def cleanup(self):
         print("Cleaning up")
         if os.path.exists(self.temp):
-            if (self.temp.startwith("tempxxx")):
+            if (self.temp.startswith("tempxxx")):
                 def handleRemoveReadonly(func, path, exc):
                     excvalue = exc[1]
                     if excvalue.errno == errno.EACCES:

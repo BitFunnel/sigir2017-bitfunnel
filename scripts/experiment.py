@@ -77,7 +77,6 @@ class Experiment:
                 "{2}").format(self.mg4j_classpath, self.manifest, self.mg4j_basename)
         if not os.path.exists(self.mg4j_index_path):
             os.makedirs(self.mg4j_index_path)
-#        run(args, self.mg4j_index_path)
         execute(args)
 
 
@@ -94,15 +93,17 @@ class Experiment:
 
     # TODO: test this method.
     def build_pef_collection(self):
+        if not os.path.exists(self.pef_index_path):
+            os.makedirs(self.pef_index_path)
         if (self.queries is None):
             args = ("java -cp {0} "
                     "org.bitfunnel.reproducibility.IndexExporter "
-                    "{1} {2} --index").format(self.mg4j_classpath, self.mg4j_basename, self.pef_index_path);
+                    "{1} {2} --index").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename);
         else:
             args = ("java -cp {0} "
                     "org.bitfunnel.reproducibility.IndexExporter "
                     "{1} {2} --index "
-                    "--queries {3}").format(self.mg4j_classpath, self.mg4j_basename, self.pef_index_path, self.queries);
+                    "--queries {3}").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename, self.queries);
         execute(args)
 
 
@@ -235,7 +236,9 @@ def tested():
     experiment.build_bf_index()
     experiment.run_bf_queries()
 
-# experiment.pef_index_from_mg4j_index()
+experiment.pef_index_from_mg4j_index()
+
+
 # experiment.run_pef_queries()
 #
 #
