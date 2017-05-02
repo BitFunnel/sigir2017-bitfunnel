@@ -20,6 +20,11 @@ class Builder:
 
         # Use a slightly unusual temp file name to protect against accidental
         # deletions of other directories with the same name.
+        # TODO: consider whether the tempfile module would be useful here.
+        # We don't really have a problem generating unique names since they are all
+        # under root. The main concern is preventing accidental deletions of important
+        # directories because of bugs relating to paths or incorrect command-line
+        # arguments.
         self.temp = os.path.join(root, "tempxxx-{0}".format(self.thread_id));
         self.chunkdir = os.path.join(root, "chunks")
         self.classpath = os.path.join(self.mg4j, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
@@ -107,7 +112,10 @@ class Builder:
     def cleanup(self):
         print("Cleaning up")
         if os.path.exists(self.temp):
-            if (self.temp.startswith("tempxxx")):
+            # The check for "tempxxx" is to guard against bugs with path operations
+            # and command-line arguments which might lead to the accidental deletion
+            # of an important directory.
+            if "tempxxx" in self.temp:
                 def handleRemoveReadonly(func, path, exc):
                     excvalue = exc[1]
                     if excvalue.errno == errno.EACCES:
@@ -116,6 +124,7 @@ class Builder:
                     else:
                         raise
 
+                print("rmtree {0}".format(self.temp));
                 shutil.rmtree(self.temp, ignore_errors=False, onerror=handleRemoveReadonly)
 
 
