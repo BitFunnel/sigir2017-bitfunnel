@@ -15,21 +15,21 @@ class Experiment:
                  bf_executables,
                  mg4j_repo,
                  pef_executables,
-                 bf_index_path,
-                 mg4j_index_path,
-                 pef_index_path,
-                 manifest,
+                 index_root,
+                 basename,
+                 chunk_dir,
+                 chunk_pattern,
                  queries):
 
         self.bf_executable = bf_executables
         self.mg4j_repo = mg4j_repo
         self.pef_executable = pef_executables
 
-        self.bf_index_path = bf_index_path
-        self.mg4j_index_path = mg4j_index_path
-        self.pef_index_path = pef_index_path
+        self.index_root = index_root
 
-        self.manifest = manifest
+        self.chunk_dir = chunk_dir
+        self.chunk_pattern = chunk_pattern
+        self.basename = basename
         self.queries = queries;
 
         self.thread_count = 8
@@ -43,7 +43,16 @@ class Experiment:
     # in the constructor and then call update() to regenerate the derived
     # members.
     def update(self):
-        self.basename = os.path.basename(self.manifest).split('.')[0];
+        # TODO: Consider copying manifest into root.
+        # TODO: What if manifest already exists? Consider pre-verification step that catches errors up front.
+        # TODO: Consider basing root name off of manifest name.
+        self.root = os.path.join(self.index_root, self.basename)
+
+        self.bf_index_path = os.path.join(self.root, "bitfunnel")
+        self.mg4j_index_path = os.path.join(self.root, "mg4j")
+        self.pef_index_path = os.path.join(self.root, "pef")
+
+        self.manifest = os.path.join(self.root, self.basename + "-manifest.txt")
 
         # BitFunnel variables
         self.bf_repl_script = os.path.join(self.bf_index_path, self.basename + "-repl.script")
@@ -193,41 +202,52 @@ class Experiment:
         print("TODO: Implement run_lucene_queries")
 
 
-def build_chunk_manifest(chunk_root, pattern, manifest_file):
-    regex = re.compile(pattern)
-    chunks = [os.path.join(chunk_root, f)
-              for root, dirs, files in os.walk(chunk_root)
-              for f in files
-              if regex.search(f) is not None]
+    def build_chunk_manifest(self):
+        regex = re.compile(self.chunk_pattern)
+        chunks = [os.path.join(self.chunk_dir, f)
+                  for root, dirs, files in os.walk(self.chunk_dir)
+                  for f in files
+                  if regex.search(f) is not None]
 
-    for chunk in chunks:
-        print(chunk)
-
-    dir = os.path.dirname(manifest_file)
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-
-    with open(manifest_file, 'w') as file:
         for chunk in chunks:
-            file.write(chunk + '\n')
+            print(chunk)
+
+        if not os.path.exists(self.root):
+            os.makedirs(self.root)
+        # dir = os.path.dirname(manifest)
+        # if not os.path.exists(dir):
+        #     os.makedirs(dir)
+
+        print("Writing manifest {0}".format(self.manifest))
+        with open(self.manifest, 'w') as file:
+            for chunk in chunks:
+                file.write(chunk + '\n')
 
 
-manifest = r"D:\temp\big\index-10-1000-1500.txt"
+manifest = r"D:\temp\index-273-100-150\index-273-1000-1500.txt"
 
 experiment = Experiment(
+    # Paths to tools
     r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
     r"D:\git\mg4j-workbench",
     r"/home/mhop/git/partitioned_elias_fano/bin",
-    r"D:\temp\big\bitfunnel",
-    r"D:\temp\big\mg4j",
-    r"D:\temp\big\pef",
-    manifest,
+
+    # The directory containing all indexes and the basename for this index
+    r"D:\temp\indexes",
+    r"273-150-100",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"d:\sigir\chunks-100-150",
+    r"GX.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
     r"D:\git\mg4j-workbench\data\trec-terabyte\06.efficiency_topics.all"
 )
 
-# build_chunk_manifest(r"d:\temp\multi-threaded\chunks",
-#                      r"GX00.*",
-#                      manifest)
+
+experiment.build_chunk_manifest()
+experiment.build_mg4j_index()
 
 def tested():
     experiment.build_mg4j_index()
@@ -236,9 +256,10 @@ def tested():
     experiment.build_bf_index()
     experiment.run_bf_queries()
 
-experiment.pef_index_from_mg4j_index()
+# Partially tested. Still need to test PEF part.
+# experiment.pef_index_from_mg4j_index()
 
-
+# Untested
 # experiment.run_pef_queries()
 #
 #
