@@ -183,7 +183,8 @@ class Experiment:
                     file.write("threads {0}\n".format(t))
                     file.write("cd {0}\n".format(results_dir))
                     file.write("query log {0}\n".format(self.filtered_query_file))
-                    file.write("quit\n")
+
+                file.write("quit\n")
 
         # Start BitFunnel repl
         args = ("{0} repl {1} -script {2}").format(self.bf_executable,
@@ -224,7 +225,7 @@ class Experiment:
                 file.write(chunk + '\n')
 
 
-manifest = r"D:\temp\index-273-100-150\index-273-1000-1500.txt"
+# manifest = r"D:\temp\index-273-100-150\index-273-1000-1500.txt"
 
 experiment = Experiment(
     # Paths to tools
@@ -234,11 +235,11 @@ experiment = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
-    r"273-150-100",
+    r"273-1000-1500",
 
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
-    r"d:\sigir\chunks-100-150",
+    r"d:\sigir\chunks-1000-1500",
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
@@ -246,8 +247,12 @@ experiment = Experiment(
 )
 
 
-experiment.build_chunk_manifest()
-experiment.build_mg4j_index()
+# experiment.build_chunk_manifest()
+# experiment.build_mg4j_index()
+# experiment.run_mg4j_queries()
+# experiment.build_bf_index()
+experiment.run_bf_queries()
+
 
 def tested():
     experiment.build_mg4j_index()
