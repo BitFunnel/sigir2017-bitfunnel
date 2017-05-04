@@ -5,7 +5,7 @@ from bf_utilities import run
 
 def execute(command):
     print(command)
-    run(command, r"D:\temp")
+    run(command, os.getcwd())
     print("Finished")
     print()
 
@@ -72,7 +72,7 @@ class Experiment:
 
         # TODO: mapping to filtered query file is in Java right now. Can this be moved here?
         self.queries_basename = os.path.basename(self.queries)
-        self.pef_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-ints.txt")
+        self.pef_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtered-ints.txt")
         self.filtered_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtered.txt")
 
         self.pef_results_file = os.path.join(self.pef_index_path, self.queries_basename + "-results.csv")
@@ -133,7 +133,7 @@ class Experiment:
 
     # TODO: test this method.
     def run_pef_queries(self):
-        args = ("{0}{1} {2} {3} {4} {5}").format(self.pef_runner,
+        args = ("{0} {1} {2} {3} {4} {5}").format(self.pef_runner,
                                                self.pef_index_type,
                                                self.pef_index_file,
                                                self.pef_query_file,
@@ -262,18 +262,19 @@ experiment_linux = Experiment(
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
-    r"/home/mhop/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all"
+    r"/home/mhop/git/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all"
 )
 
-def run(experiment):
+def runxxx(experiment):
     # experiment.build_chunk_manifest()
     # experiment.build_mg4j_index()
-    # experiment.run_mg4j_queries()
+    experiment.run_mg4j_queries()
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
-    experiment.pef_index_from_mg4j_index()
+    # experiment.pef_index_from_mg4j_index()
+    # experiment.run_pef_queries()
 
-run(experiment_linux)
+runxxx(experiment_linux)
 
 
 # def tested():
