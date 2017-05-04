@@ -174,6 +174,7 @@ class Experiment:
         # file = sys.stdout
             for i in range(0,1):
                 file.write("load manifest {0}\n".format(self.manifest));
+                file.write("status\n");
                 file.write("compiler\n");
                 for t in range(1, self.thread_count + 1):
                     results_dir = os.path.join(self.bf_index_path, "results-{0}".format(t))
@@ -235,11 +236,11 @@ experiment_windows = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
-    r"273-1000-1500",
+    r"273-150-100",
 
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
-    r"d:\sigir\chunks-1000-1500",
+    r"d:\sigir\chunks-100-150",
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
@@ -268,13 +269,13 @@ experiment_linux = Experiment(
 def runxxx(experiment):
     # experiment.build_chunk_manifest()
     # experiment.build_mg4j_index()
-    experiment.run_mg4j_queries()
+    # experiment.run_mg4j_queries()
     # experiment.build_bf_index()
-    # experiment.run_bf_queries()
+    experiment.run_bf_queries()
     # experiment.pef_index_from_mg4j_index()
     # experiment.run_pef_queries()
 
-runxxx(experiment_linux)
+runxxx(experiment_windows)
 
 
 # def tested():
