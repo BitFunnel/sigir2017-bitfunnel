@@ -1,11 +1,10 @@
 import os
 import re
-import sys
 from bf_utilities import run
 
-def execute(command):
+def execute(command, log_file = None):
     print(command)
-    run(command, os.getcwd())
+    run(command, os.getcwd(), log_file)
     print("Finished")
     print()
 
@@ -79,6 +78,12 @@ class Experiment:
         self.mg4j_results_file = os.path.join(self.mg4j_index_path, self.queries_basename + "-results.csv")
 
 
+    ###########################################################################
+    #
+    # mg4j
+    #
+    ###########################################################################
+
     def build_mg4j_index(self):
         args = ("java -cp {0} "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
@@ -86,7 +91,9 @@ class Experiment:
                 "{2}").format(self.mg4j_classpath, self.manifest, self.mg4j_basename)
         if not os.path.exists(self.mg4j_index_path):
             os.makedirs(self.mg4j_index_path)
-        execute(args)
+
+        log_file = os.path.join(self.mg4j_index_path, "build_mg4j_index_log.txt")
+        execute(args, log_file)
 
 
     def run_mg4j_queries(self):
@@ -97,8 +104,14 @@ class Experiment:
                                              self.mg4j_basename,
                                              self.filtered_query_file,
                                              self.mg4j_results_file)
-        execute(args)
+        log_file = os.path.join(self.mg4j_index_path, "run_mg4j_queries_log.txt")
+        execute(args, log_file)
 
+    ###########################################################################
+    #
+    # Partitioned Elias-Fano (PEF)
+    #
+    ###########################################################################
 
     # TODO: test this method.
     def build_pef_collection(self):
@@ -113,7 +126,8 @@ class Experiment:
                     "org.bitfunnel.reproducibility.IndexExporter "
                     "{1} {2} --index "
                     "--queries {3}").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename, self.queries);
-        execute(args)
+        log_file = os.path.join(self.pef_index_path, "build_pef_collection_log.txt")
+        execute(args, log_file)
 
 
     # TODO: test this method.
@@ -122,7 +136,8 @@ class Experiment:
                                           self.pef_index_type,
                                           self.pef_collection,
                                           self.pef_index_file)
-        execute(args)
+        log_file = os.path.join(self.pef_index_path, "build_pef_index_log.txt")
+        execute(args, log_file)
 
 
     # TODO: test this method.
@@ -139,9 +154,15 @@ class Experiment:
                                                self.pef_query_file,
                                                self.thread_count,
                                                self.pef_results_file)
-        execute(args)
+        log_file = os.path.join(self.pef_index_path, "run_pef_queries_log.txt")
+        execute(args, log_file)
 
 
+    ###########################################################################
+    #
+    # BitFunnel
+    #
+    ###########################################################################
     def build_bf_index(self):
         if not os.path.exists(self.bf_index_path):
             os.makedirs(self.bf_index_path)
@@ -155,7 +176,8 @@ class Experiment:
         args = ("{0} statistics {1} {2}").format(self.bf_executable,
                                              self.manifest,
                                              self.bf_index_path)
-        execute(args)
+        log_file = os.path.join(self.bf_index_path, "build_bf_statistics_log.txt")
+        execute(args, log_file)
 
         # Run termtable builder
         # TODO: don't hard code density.
@@ -163,7 +185,8 @@ class Experiment:
         # TODO: don't hard code SNR.
         args = ("{0} termtable {1} 0.1 Optimal").format(self.bf_executable,
                                                         self.bf_index_path)
-        execute(args)
+        log_file = os.path.join(self.bf_index_path, "build_bf_term_table_log.txt")
+        execute(args, log_file)
 
 
     # TODO: test this method.
@@ -191,7 +214,8 @@ class Experiment:
         args = ("{0} repl {1} -script {2}").format(self.bf_executable,
                                                    self.bf_index_path,
                                                    self.bf_repl_script)
-        execute(args)
+        log_file = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
+        execute(args, log_file)
 
 
     # TODO: test this method.
