@@ -227,7 +227,7 @@ class Experiment:
 
 # manifest = r"D:\temp\index-273-100-150\index-273-1000-1500.txt"
 
-experiment = Experiment(
+experiment_windows = Experiment(
     # Paths to tools
     r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
     r"D:\git\mg4j-workbench",
@@ -246,20 +246,42 @@ experiment = Experiment(
     r"D:\git\mg4j-workbench\data\trec-terabyte\06.efficiency_topics.all"
 )
 
+experiment_linux = Experiment(
+    # Paths to tools
+    r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
+    r"/home/mhop/git/mg4j-workbench",
+    r"/home/mhop/git/partitioned_elias_fano/bin",
 
-# experiment.build_chunk_manifest()
-# experiment.build_mg4j_index()
-# experiment.run_mg4j_queries()
-# experiment.build_bf_index()
-experiment.run_bf_queries()
+    # The directory containing all indexes and the basename for this index
+    r"/mnt/d/temp/indexes",
+    r"273-150-100",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"/mnt/d/sigir/chunks-100-150",
+    r"GX.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
+    r"/home/mhop/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all"
+)
+
+def run(experiment):
+    # experiment.build_chunk_manifest()
+    # experiment.build_mg4j_index()
+    # experiment.run_mg4j_queries()
+    # experiment.build_bf_index()
+    # experiment.run_bf_queries()
+    experiment.pef_index_from_mg4j_index()
+
+run(experiment_linux)
 
 
-def tested():
-    experiment.build_mg4j_index()
-    experiment.run_mg4j_queries()
-
-    experiment.build_bf_index()
-    experiment.run_bf_queries()
+# def tested():
+#     experiment.build_mg4j_index()
+#     experiment.run_mg4j_queries()
+#
+#     experiment.build_bf_index()
+#     experiment.run_bf_queries()
 
 # Partially tested. Still need to test PEF part.
 # experiment.pef_index_from_mg4j_index()
