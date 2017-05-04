@@ -89,13 +89,13 @@ class Builder:
     def create_chunk_manifest(self, chunk):
         # Create the manifest file
         input = os.path.join(self.temp, chunk + ".chunk")
-        output = os.path.join(self.temp, "manifest.txt")
+        output = os.path.join(self.temp, "Manifest.txt")
         with open(output, 'w') as file:
             file.write(input + '\n')
 
 
     def create_filtered_chunk(self, chunk):
-        manifest = os.path.join(self.temp, "manifest.txt")
+        manifest = os.path.join(self.temp, "Manifest.txt")
         args = ("{0} filter {1} {2} -size {3} {4}").format(
             self.bitfunnel, manifest, self.temp, self.min_postings, self.max_postings)
         print(args)
