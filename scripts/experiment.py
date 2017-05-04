@@ -266,16 +266,35 @@ experiment_linux = Experiment(
     r"/home/mhop/git/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all"
 )
 
+experiment_dl_linux = Experiment(
+    # Paths to tools
+    r"/home/danluu/dev/BitFunnel/build-ninja/tools/BitFunnel/src/BitFunnel",
+    r"/home/danluu/dev/mg4j-workbench",
+    r"/home/danluu/dev/partitioned_elias_fano/bin",
+
+    # The directory containing all indexes and the basename for this index
+    r"/home/danluu/dev/chunks-100-150",
+    r"273-128-255",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"/home/danluu/dev/gov2",
+    r"GX000.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
+    r"/home/danluu/dev/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all"
+)
+
 def runxxx(experiment):
     # experiment.build_chunk_manifest()
-    # experiment.build_mg4j_index()
+    experiment.build_mg4j_index()
     # experiment.run_mg4j_queries()
     # experiment.build_bf_index()
-    experiment.run_bf_queries()
+    # experiment.run_bf_queries()
     # experiment.pef_index_from_mg4j_index()
     # experiment.run_pef_queries()
 
-runxxx(experiment_windows)
+runxxx(experiment_dl_linux)
 
 
 # def tested():

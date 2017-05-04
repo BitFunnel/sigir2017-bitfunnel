@@ -60,7 +60,8 @@ class Builder:
         if (platform.system() == 'Windows'):
             command = "dir /s/b"
         else:
-            command = "find ."
+            # This command is meaningless and might as well be ls when used this way.
+            command = "find "
         args = ("{0} {1} | "
                 "java -cp {2} "
                 "it.unimi.di.big.mg4j.document.TRECDocumentCollection "
@@ -186,11 +187,19 @@ def process_chunk_list(gov2, root, mg4j, bitfunnel, min_postings, max_postings, 
     print("All threads finished.")
 
 
-process_chunk_list(r"d:\data\gov2",
-                   r"d:\temp\multi-threaded",
-                   r"D:\git\mg4j-workbench",
-                   r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-                   1000,
-                   1500,
-                   7)
+# process_chunk_list(r"d:\data\gov2",
+#                    r"d:\temp\multi-threaded",
+#                    r"D:\git\mg4j-workbench",
+#                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+#                    1000,
+#                    1500,
+#                    7)
 
+
+process_chunk_list(r"/home/danluu/dev/gov2",
+                   r"/home/danluu/dev/what-is-this",
+                   r"/home/danluu/dev/mg4j-workbench",
+                   r"/home/danluu/dev/BitFunnel/build-ninja/tools/BitFunnel/src/BitFunnel",
+                   128,
+                   255,
+                   7)
