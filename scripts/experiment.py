@@ -256,7 +256,7 @@ class Experiment:
         args = ("{0} repl {1} -script {2}").format(self.bf_executable,
                                                    self.bf_index_path,
                                                    self.bf_repl_script)
-        execute(args, self.bf_run_queries.log)
+        execute(args, self.bf_run_queries_log)
 
 
 
