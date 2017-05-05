@@ -97,7 +97,7 @@ class Experiment:
     #
     ###########################################################################
 
-    def fixQueryLog(self):
+    def fix_query_log(self):
         print("fixing {0} ==> {1}".format(self.queries, self.root_query_file))
         with open(self.queries, 'r') as f, open(self.root_query_file, 'w') as out:
             for line in f:
@@ -106,10 +106,11 @@ class Experiment:
 
                 # Remove punctuation and then coalesce spaces and remove
                 # leading and trailing spaces.
-                step2 = ' '.join(re.sub(r"[-;:,&'\+\.]", ' ', step1).split())
+                step2 = ' '.join(re.sub(r"[-;:,&'\+\./\(\)]", ' ', step1).split())
 
                 # Write to output file.
-                print(step2, file=out)
+                if len(step2) > 0:
+                    print(step2, file=out)
 
 
     ###########################################################################
@@ -138,29 +139,31 @@ class Experiment:
                                              self.mg4j_results_file)
         execute(args, self.mg4j_run_queries_log)
 
+
+    def filter_query_log(self):
+        args = ("java -cp {0} "
+                "org.bitfunnel.reproducibility.IndexExporter "
+                "{1} {2} "
+                "--queries {3}").format(self.mg4j_classpath, self.mg4j_basename, self.root, self.root_query_file);
+        execute(args, self.pef_build_collection_log)
+
+
     ###########################################################################
     #
     # Partitioned Elias-Fano (PEF)
     #
     ###########################################################################
 
-    # TODO: test this method.
     def build_pef_collection(self):
         if not os.path.exists(self.pef_index_path):
             os.makedirs(self.pef_index_path)
-        if (self.queries is None):
-            args = ("java -cp {0} "
-                    "org.bitfunnel.reproducibility.IndexExporter "
-                    "{1} {2} --index").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename);
-        else:
-            args = ("java -cp {0} "
-                    "org.bitfunnel.reproducibility.IndexExporter "
-                    "{1} {2} --index "
-                    "--queries {3}").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename, self.queries);
+
+        args = ("java -cp {0} "
+                "org.bitfunnel.reproducibility.IndexExporter "
+                "{1} {2} --index").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename);
         execute(args, self.pef_build_collection_log)
 
 
-    # TODO: test this method.
     def build_pef_index(self):
         args = ("{0} {1} {2} {3}").format(self.pef_creator,
                                           self.pef_index_type,
@@ -169,13 +172,11 @@ class Experiment:
         execute(args, self.pef_build_index_log)
 
 
-    # TODO: test this method.
     def pef_index_from_mg4j_index(params):
         params.build_pef_collection()
         params.build_pef_index()
 
 
-    # TODO: test this method.
     def run_pef_queries(self):
         args = ("{0} {1} {2} {3} {4} {5}").format(self.pef_runner,
                                                self.pef_index_type,
@@ -215,7 +216,6 @@ class Experiment:
         execute(args, self.bf_build_term_table_log)
 
 
-    # TODO: test this method.
     def run_bf_queries(self):
         # Create script file
         # TODO: reinstate following lines.
@@ -254,6 +254,9 @@ class Experiment:
 
 
     def build_chunk_manifest(self):
+        if not os.path.exists(self.root):
+            os.makedirs(self.root)
+
         regex = re.compile(self.chunk_pattern)
         chunks = [os.path.join(self.chunk_dir, f)
                   for root, dirs, files in os.walk(self.chunk_dir)
@@ -262,12 +265,6 @@ class Experiment:
 
         for chunk in chunks:
             print(chunk)
-
-        if not os.path.exists(self.root):
-            os.makedirs(self.root)
-        # dir = os.path.dirname(manifest)
-        # if not os.path.exists(dir):
-        #     os.makedirs(dir)
 
         print("Writing manifest {0}".format(self.manifest))
         with open(self.manifest, 'w') as file:
@@ -335,9 +332,10 @@ experiment_dl_linux = Experiment(
 )
 
 def runxxx(experiment):
-    experiment.fixQueryLog()
+    experiment.fix_query_log()
     # experiment.build_chunk_manifest()
     # experiment.build_mg4j_index()
+    experiment.filter_query_log()
     # experiment.run_mg4j_queries()
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
@@ -347,20 +345,7 @@ def runxxx(experiment):
 runxxx(experiment_windows)
 
 
-# def tested():
-#     experiment.build_mg4j_index()
-#     experiment.run_mg4j_queries()
-#
-#     experiment.build_bf_index()
-#     experiment.run_bf_queries()
-
-# Partially tested. Still need to test PEF part.
-# experiment.pef_index_from_mg4j_index()
-
 # Untested
-# experiment.run_pef_queries()
-#
-#
 # experiment.build_lucene_index()
 # experiment.run_lucene_queries()
 
