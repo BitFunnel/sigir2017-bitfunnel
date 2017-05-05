@@ -80,11 +80,12 @@ class Experiment:
 
         # Query-related variables
         self.queries_basename = os.path.basename(self.queries)
-        self.root_query_file = os.path.join(self.root, self.queries_basename)
+        self.query_path = os.path.join(self.root, "queries")
+        self.root_query_file = os.path.join(self.query_path, self.queries_basename)
 
         # TODO: mapping to filtered query file is in Java right now. Can this be moved here?
-        self.pef_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtered-ints.txt")
-        self.filtered_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtered.txt")
+        self.pef_query_file = os.path.join(self.query_path, self.queries_basename + "-in-index-ints.txt")
+        self.filtered_query_file = os.path.join(self.query_path, self.queries_basename + "-in-index.txt")
 
         self.pef_results_file = os.path.join(self.pef_index_path, self.queries_basename + "-results.csv")
         self.mg4j_results_file = os.path.join(self.mg4j_index_path, self.queries_basename + "-results.csv")
@@ -98,6 +99,8 @@ class Experiment:
     ###########################################################################
 
     def fix_query_log(self):
+        if not os.path.exists(self.query_path):
+            os.makedirs(self.query_path)
         print("fixing {0} ==> {1}".format(self.queries, self.root_query_file))
         with open(self.queries, 'r') as f, open(self.root_query_file, 'w') as out:
             for line in f:
@@ -144,7 +147,10 @@ class Experiment:
         args = ("java -cp {0} "
                 "org.bitfunnel.reproducibility.IndexExporter "
                 "{1} {2} "
-                "--queries {3}").format(self.mg4j_classpath, self.mg4j_basename, self.root, self.root_query_file);
+                "--queries {3}").format(self.mg4j_classpath,
+                                        self.mg4j_basename,
+                                        self.query_path,
+                                        self.root_query_file);
         execute(args, self.pef_build_collection_log)
 
 
@@ -336,7 +342,7 @@ def runxxx(experiment):
     # experiment.build_chunk_manifest()
     # experiment.build_mg4j_index()
     experiment.filter_query_log()
-    # experiment.run_mg4j_queries()
+    experiment.run_mg4j_queries()
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
     # experiment.pef_index_from_mg4j_index()
