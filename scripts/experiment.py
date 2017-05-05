@@ -64,7 +64,7 @@ class Experiment:
         self.bf_run_queries_log = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
 
         # Lucene variables.
-        self.lucene_classpath = os.path.join(self.lucene_repo, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
+        self.lucene_classpath = os.path.join(self.lucene_repo, "target", "lucene-runner-1.0-SNAPSHOT.jar")
         self.lucene_run_queries_log = os.path.join(self.lucene_index_path, "run_lucene_queries_log.txt")
 
         # mg4j variables
@@ -265,6 +265,9 @@ class Experiment:
     #
     ###########################################################################
     def run_lucene_queries(self):
+        if not os.path.exists(self.lucene_index_path):
+            print("mkdir " + self.lucene_index_path)
+            os.makedirs(self.lucene_index_path)
         args = ("java -cp {0} "
                 "org.bitfunnel.runner.LuceneRunner "
                 "{1} {2} {3}").format(self.lucene_classpath,
@@ -272,7 +275,7 @@ class Experiment:
                                       self.filtered_query_file,
                                       self.thread_count)
         print(args)
-        # execute(args, self.lucene_run_queries_log)
+        execute(args, self.lucene_run_queries_log)
 
 
     ###########################################################################
