@@ -58,7 +58,7 @@ class Experiment:
         self.bf_shard_definition = os.path.join(self.bf_index_path, "ShardDefinition.csv")
         self.bf_build_statistics_log = os.path.join(self.bf_index_path, "build_bf_statistics_log.txt")
         self.bf_build_term_table_log = os.path.join(self.bf_index_path, "build_bf_term_table_log.txt")
-        self.bf_run_queries.log = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
+        self.bf_run_queries_log = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
 
         # mg4j variables
         self.mg4j_classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
@@ -78,13 +78,38 @@ class Experiment:
         self.pef_run_queries_log = os.path.join(self.pef_index_path, "run_pef_queries_log.txt")
 
 
-        # TODO: mapping to filtered query file is in Java right now. Can this be moved here?
+        # Query-related variables
         self.queries_basename = os.path.basename(self.queries)
+        self.root_query_file = os.path.join(self.root, self.queries_basename)
+
+        # TODO: mapping to filtered query file is in Java right now. Can this be moved here?
         self.pef_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtered-ints.txt")
         self.filtered_query_file = os.path.join(self.pef_index_path, self.queries_basename + "-filtered.txt")
 
         self.pef_results_file = os.path.join(self.pef_index_path, self.queries_basename + "-results.csv")
         self.mg4j_results_file = os.path.join(self.mg4j_index_path, self.queries_basename + "-results.csv")
+
+
+
+    ###########################################################################
+    #
+    # Query log cleaning
+    #
+    ###########################################################################
+
+    def fixQueryLog(self):
+        print("fixing {0} ==> {1}".format(self.queries, self.root_query_file))
+        with open(self.queries, 'r') as f, open(self.root_query_file, 'w') as out:
+            for line in f:
+                # Remove leading line numbers.
+                step1 = re.sub(r"\A\d+:", '', line)
+
+                # Remove punctuation and then coalesce spaces and remove
+                # leading and trailing spaces.
+                step2 = ' '.join(re.sub(r"[-;:,&'\+\.]", ' ', step1).split())
+
+                # Write to output file.
+                print(step2, file=out)
 
 
     ###########################################################################
@@ -268,7 +293,7 @@ experiment_windows = Experiment(
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
-    r"D:\git\mg4j-workbench\data\trec-terabyte\06.efficiency_topics.all"
+    r"D:\sigir\queries\06.efficiency_topics.all"
 )
 
 experiment_linux = Experiment(
@@ -310,15 +335,16 @@ experiment_dl_linux = Experiment(
 )
 
 def runxxx(experiment):
+    experiment.fixQueryLog()
     # experiment.build_chunk_manifest()
-    experiment.build_mg4j_index()
+    # experiment.build_mg4j_index()
     # experiment.run_mg4j_queries()
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
     # experiment.pef_index_from_mg4j_index()
     # experiment.run_pef_queries()
 
-runxxx(experiment_dl_linux)
+runxxx(experiment_windows)
 
 
 # def tested():
