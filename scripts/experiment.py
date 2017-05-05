@@ -56,10 +56,15 @@ class Experiment:
         # BitFunnel variables
         self.bf_repl_script = os.path.join(self.bf_index_path, self.basename + "-repl.script")
         self.bf_shard_definition = os.path.join(self.bf_index_path, "ShardDefinition.csv")
+        self.bf_build_statistics_log = os.path.join(self.bf_index_path, "build_bf_statistics_log.txt")
+        self.bf_build_term_table_log = os.path.join(self.bf_index_path, "build_bf_term_table_log.txt")
+        self.bf_run_queries.log = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
 
         # mg4j variables
         self.mg4j_classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
         self.mg4j_basename = os.path.join(self.mg4j_index_path, self.basename)
+        self.mg4j_build_index_log = os.path.join(self.mg4j_index_path, "build_mg4j_index_log.txt")
+        self.mg4j_run_queries_log = os.path.join(self.mg4j_index_path, "run_mg4j_queries_log.txt")
 
         # Partitioned ELias-Fano variables
         self.pef_basename = os.path.join(self.pef_index_path, self.basename)
@@ -68,6 +73,10 @@ class Experiment:
         self.pef_index_file = os.path.join(self.pef_index_path, self.basename + ".index." + self.pef_index_type)
         self.pef_creator = os.path.join(self.pef_executable, "create_freq_index")
         self.pef_runner = os.path.join(self.pef_executable, "Runner")
+        self.pef_build_collection_log = os.path.join(self.pef_index_path, "build_pef_collection_log.txt")
+        self.pef_build_index_log = os.path.join(self.pef_index_path, "build_pef_index_log.txt")
+        self.pef_run_queries_log = os.path.join(self.pef_index_path, "run_pef_queries_log.txt")
+
 
         # TODO: mapping to filtered query file is in Java right now. Can this be moved here?
         self.queries_basename = os.path.basename(self.queries)
@@ -91,9 +100,7 @@ class Experiment:
                 "{2}").format(self.mg4j_classpath, self.manifest, self.mg4j_basename)
         if not os.path.exists(self.mg4j_index_path):
             os.makedirs(self.mg4j_index_path)
-
-        log_file = os.path.join(self.mg4j_index_path, "build_mg4j_index_log.txt")
-        execute(args, log_file)
+        execute(args, self.mg4j_build_index_log)
 
 
     def run_mg4j_queries(self):
@@ -104,8 +111,7 @@ class Experiment:
                                              self.mg4j_basename,
                                              self.filtered_query_file,
                                              self.mg4j_results_file)
-        log_file = os.path.join(self.mg4j_index_path, "run_mg4j_queries_log.txt")
-        execute(args, log_file)
+        execute(args, self.mg4j_run_queries_log)
 
     ###########################################################################
     #
@@ -126,8 +132,7 @@ class Experiment:
                     "org.bitfunnel.reproducibility.IndexExporter "
                     "{1} {2} --index "
                     "--queries {3}").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename, self.queries);
-        log_file = os.path.join(self.pef_index_path, "build_pef_collection_log.txt")
-        execute(args, log_file)
+        execute(args, self.pef_build_collection_log)
 
 
     # TODO: test this method.
@@ -136,8 +141,7 @@ class Experiment:
                                           self.pef_index_type,
                                           self.pef_collection,
                                           self.pef_index_file)
-        log_file = os.path.join(self.pef_index_path, "build_pef_index_log.txt")
-        execute(args, log_file)
+        execute(args, self.pef_build_index_log)
 
 
     # TODO: test this method.
@@ -154,8 +158,7 @@ class Experiment:
                                                self.pef_query_file,
                                                self.thread_count,
                                                self.pef_results_file)
-        log_file = os.path.join(self.pef_index_path, "run_pef_queries_log.txt")
-        execute(args, log_file)
+        execute(args, self.pef_run_queries_log)
 
 
     ###########################################################################
@@ -176,8 +179,7 @@ class Experiment:
         args = ("{0} statistics {1} {2}").format(self.bf_executable,
                                              self.manifest,
                                              self.bf_index_path)
-        log_file = os.path.join(self.bf_index_path, "build_bf_statistics_log.txt")
-        execute(args, log_file)
+        execute(args, self.bf_build_statistics_log)
 
         # Run termtable builder
         # TODO: don't hard code density.
@@ -185,8 +187,7 @@ class Experiment:
         # TODO: don't hard code SNR.
         args = ("{0} termtable {1} 0.1 Optimal").format(self.bf_executable,
                                                         self.bf_index_path)
-        log_file = os.path.join(self.bf_index_path, "build_bf_term_table_log.txt")
-        execute(args, log_file)
+        execute(args, self.bf_build_term_table_log)
 
 
     # TODO: test this method.
@@ -214,8 +215,7 @@ class Experiment:
         args = ("{0} repl {1} -script {2}").format(self.bf_executable,
                                                    self.bf_index_path,
                                                    self.bf_repl_script)
-        log_file = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
-        execute(args, log_file)
+        execute(args, self.bf_run_queries.log)
 
 
     # TODO: test this method.
