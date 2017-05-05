@@ -110,7 +110,9 @@ class Experiment:
         if not os.path.exists(self.query_path):
             os.makedirs(self.query_path)
         print("fixing {0} ==> {1}".format(self.queries, self.root_query_file))
-        with open(self.queries, 'r') as f, open(self.root_query_file, 'w') as out:
+        # We use this encoding because the default is UTF-8 and trec efficiency is not UTF-8.
+        # We don't know if this is the correct encoding and may read bogus queries.
+        with open(self.queries, 'r', encoding="ISO-8859-1") as f, open(self.root_query_file, 'w') as out:
             for line in f:
                 # Remove leading line numbers.
                 step1 = re.sub(r"\A\d+:", '', line)
@@ -133,7 +135,7 @@ class Experiment:
     def build_mg4j_index(self):
         args = ("java -cp {0} "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
-                "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence({1}) "
+                "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence\({1}\) "
                 "{2}").format(self.mg4j_classpath, self.manifest, self.mg4j_basename)
         if not os.path.exists(self.mg4j_index_path):
             os.makedirs(self.mg4j_index_path)
@@ -372,7 +374,7 @@ experiment_dl_linux = Experiment(
     r"/home/danluu/dev/partitioned_elias_fano/bin",
 
     # The directory containing all indexes and the basename for this index
-    r"/home/danluu/dev/chunks-100-150",
+    r"/home/danluu/dev/what-is-this",
     r"273-128-255",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -381,7 +383,7 @@ experiment_dl_linux = Experiment(
     r"GX000.*",  # Use all chunks
 
     # The query log to be used for this experiment.
-    r"/home/danluu/dev/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all"
+    r"/home/danluu/Downloads/06.efficiency_topics.all"
 )
 
 def runxxx(experiment):
