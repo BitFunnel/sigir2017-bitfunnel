@@ -1,3 +1,5 @@
+import csv
+import itertools
 import os
 import re
 from bf_utilities import run
@@ -315,6 +317,61 @@ class Experiment:
                 file.write(chunk + '\n')
 
 
+    ###########################################################################
+    #
+    # False positive rate
+    #
+    ###########################################################################
+    def compute_false_positive_rate(self):
+        bf = os.path.join(self.bf_index_path, "results-1\QueryPipelineStatistics.csv");
+        mg4j = self.mg4j_results_file
+
+        count = 0;
+        total_matches = 0
+        total_queries = 0
+        false_positives = 0
+        false_positive_queries = 0
+        false_negatives = 0
+        false_negative_queries = 0
+
+        with open(bf, newline='') as bf_results, open(mg4j, newline='') as mg4j_results:
+            # Discard header line from BitFunnel results.
+            # MG4J results don't currently include a header line.
+            bf_results.readline()
+            bf_reader = csv.reader(bf_results, delimiter=',', quotechar='|')
+            mg4j_reader = csv.reader(mg4j_results, delimiter=',', quotechar='|')
+            for bfRow, mg4jRow in itertools.zip_longest(bf_reader, mg4j_reader):
+#                print(bfRow, mg4jRow)
+                bf_matches = int(bfRow[2])
+                mg4j_matches = int(mg4jRow[1])
+
+                total_queries += 1
+                total_matches += mg4j_matches
+
+                if (bf_matches > mg4j_matches):
+                    false_positives += (bf_matches - mg4j_matches)
+                    false_positive_queries += 1
+                elif (bf_matches < mg4j_matches):
+                    false_negatives += (mg4j_matches - bf_matches)
+                    false_negative_queries += 1
+
+                # count += 1
+                # if count > 2:
+                #     break
+
+        print("Total matches: {0}".format(total_matches))
+        print("Total queries: {0}".format(total_queries))
+
+        print("False positives: {0}".format(false_positives))
+        print("False positive queries: {0}".format(false_positive_queries))
+        print("False positive rate: {0}".format(false_positives / total_matches))
+        print("False positive query rate: {0}".format(false_positive_queries / total_queries))
+
+        print("False negatives: {0}".format(false_negatives))
+        print("False negative queries: {0}".format(false_negative_queries))
+        print("False negative rate: {0}".format(false_negatives / total_matches))
+        print("False negative query rate: {0}".format(false_negative_queries / total_queries))
+
 
 experiment_windows_273_150_100 = Experiment(
     # Paths to tools
@@ -402,10 +459,12 @@ def runxxx(experiment):
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
     # experiment.build_lucene_index()
-    experiment.run_lucene_queries()
+    # experiment.run_lucene_queries()
     # experiment.pef_index_from_mg4j_index()
-    # xperiment.run_pef_queries()
+    # experiment.run_pef_queries()
+    experiment.compute_false_positive_rate()
 
-runxxx(experiment_windows_273_1000_1500)
+
+runxxx(experiment_windows_273_150_100)
 
 
