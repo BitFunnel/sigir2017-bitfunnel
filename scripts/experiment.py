@@ -57,6 +57,8 @@ class Experiment:
         self.manifest = os.path.join(self.root, self.basename + "-manifest.txt")
 
         # BitFunnel variables
+        # TODO: don't hard code density.
+        self.bf_density = 0.15
         self.bf_repl_script = os.path.join(self.bf_index_path, self.basename + "-repl.script")
         self.bf_shard_definition = os.path.join(self.bf_index_path, "ShardDefinition.csv")
         self.bf_build_statistics_log = os.path.join(self.bf_index_path, "build_bf_statistics_log.txt")
@@ -224,11 +226,11 @@ class Experiment:
         execute(args, self.bf_build_statistics_log)
 
         # Run termtable builder
-        # TODO: don't hard code density.
         # TODO: don't hard code Optimal.
         # TODO: don't hard code SNR.
-        args = ("{0} termtable {1} 0.1 Optimal").format(self.bf_executable,
-                                                        self.bf_index_path)
+        args = ("{0} termtable {1} {2} Optimal").format(self.bf_executable,
+                                                        self.bf_index_path,
+                                                        self.bf_density)
         execute(args, self.bf_build_term_table_log)
 
 
@@ -304,7 +306,6 @@ class Experiment:
                 file.write(chunk + '\n')
 
 
-# manifest = r"D:\temp\index-273-100-150\index-273-1000-1500.txt"
 
 experiment_windows_273_150_100 = Experiment(
     # Paths to tools
@@ -391,10 +392,10 @@ def runxxx(experiment):
     # experiment.build_chunk_manifest()
     # experiment.build_mg4j_index()
     # experiment.filter_query_log()
-    experiment.run_lucene_queries()
+    # experiment.run_lucene_queries()
     # experiment.run_mg4j_queries()
     # experiment.build_bf_index()
-    # experiment.run_bf_queries()
+    experiment.run_bf_queries()
     # experiment.pef_index_from_mg4j_index()
     # experiment.run_pef_queries()
 
