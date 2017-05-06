@@ -137,6 +137,7 @@ class Builder:
         # Only build chunk if it doesn't already exist.
         # This helps with restarting long runs that fail in the middle.
         if (not os.path.exists(chunk_name)):
+            self.cleanup()
             self.make_temp_dir()
             self.decompress(chunk)
             self.build_collection(chunk)
@@ -187,19 +188,19 @@ def process_chunk_list(gov2, root, mg4j, bitfunnel, min_postings, max_postings, 
     print("All threads finished.")
 
 
-# process_chunk_list(r"d:\data\gov2",
-#                    r"d:\temp\multi-threaded",
-#                    r"D:\git\mg4j-workbench",
-#                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-#                    1000,
-#                    1500,
-#                    7)
-
-
-process_chunk_list(r"/home/danluu/dev/gov2",
-                   r"/home/danluu/dev/what-is-this",
-                   r"/home/danluu/dev/mg4j-workbench",
-                   r"/home/danluu/dev/BitFunnel/build-ninja/tools/BitFunnel/src/BitFunnel",
-                   128,
-                   255,
+process_chunk_list(r"d:\data\gov2",
+                   r"d:\temp\chunks",
+                   r"D:\git\mg4j-workbench",
+                   r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+                   1024,
+                   2047,
                    7)
+
+
+# process_chunk_list(r"/home/danluu/dev/gov2",
+#                    r"/home/danluu/dev/what-is-this",
+#                    r"/home/danluu/dev/mg4j-workbench",
+#                    r"/home/danluu/dev/BitFunnel/build-ninja/tools/BitFunnel/src/BitFunnel",
+#                    128,
+#                    255,
+#                    7)
