@@ -268,14 +268,25 @@ class Experiment:
     # Lucene
     #
     ###########################################################################
+    def build_lucene_index(self):
+        # if not os.path.exists(self.lucene_index_path):
+        #     print("mkdir " + self.lucene_index_path)
+        #     os.makedirs(self.lucene_index_path)
+        args = ("java -cp {0} "
+                "org.bitfunnel.runner.IndexBuilder "
+                "{1} {2} {3}").format(self.lucene_classpath,
+                                      self.lucene_index_path,
+                                      self.manifest,
+                                      self.thread_count)
+        print(args)
+        execute(args, self.lucene_run_queries_log)
+
+
     def run_lucene_queries(self):
-        if not os.path.exists(self.lucene_index_path):
-            print("mkdir " + self.lucene_index_path)
-            os.makedirs(self.lucene_index_path)
         args = ("java -cp {0} "
                 "org.bitfunnel.runner.LuceneRunner "
                 "{1} {2} {3}").format(self.lucene_classpath,
-                                      self.manifest,
+                                      self.lucene_index_path,
                                       self.filtered_query_file,
                                       self.thread_count)
         print(args)
@@ -395,15 +406,12 @@ def runxxx(experiment):
     # experiment.run_lucene_queries()
     # experiment.run_mg4j_queries()
     # experiment.build_bf_index()
-    experiment.run_bf_queries()
+    # experiment.run_bf_queries()
+    # experiment.build_lucene_index()
+    experiment.run_lucene_queries()
     # experiment.pef_index_from_mg4j_index()
     # experiment.run_pef_queries()
 
-runxxx(experiment_windows_273_1000_1500)
-
-
-# Untested
-# experiment.build_lucene_index()
-# experiment.run_lucene_queries()
+runxxx(experiment_windows_273_150_100)
 
 
