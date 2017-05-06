@@ -146,11 +146,11 @@ class Experiment:
     def run_mg4j_queries(self):
         args = ("java -cp {0} "
                 "org.bitfunnel.reproducibility.QueryLogRunner "
-                "-t {1} {2} {3} {4}").format(self.classpath,
-                                             self.thread_count,
-                                             self.mg4j_basename,
-                                             self.filtered_query_file,
-                                             self.mg4j_results_file)
+                "mg4j {1} {2} {3} {4}").format(self.classpath,
+                                               self.mg4j_basename,
+                                               self.filtered_query_file,
+                                               self.mg4j_results_file,
+                                               self.thread_count)
         execute(args, self.mg4j_run_queries_log)
 
 
@@ -283,11 +283,12 @@ class Experiment:
 
     def run_lucene_queries(self):
         args = ("java -cp {0} "
-                "org.bitfunnel.runner.LuceneRunner "
-                "{1} {2} {3}").format(self.classpath,
-                                      self.lucene_index_path,
-                                      self.filtered_query_file,
-                                      self.thread_count)
+                "org.bitfunnel.reproducibility.QueryLogRunner "
+                "lucene {1} {2} {3} {4}").format(self.classpath,
+                                                 self.lucene_index_path,
+                                                 self.filtered_query_file,
+                                                 self.mg4j_results_file,
+                                                 self.thread_count)
         print(args)
         execute(args, self.lucene_run_queries_log)
 
