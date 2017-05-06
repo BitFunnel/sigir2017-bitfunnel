@@ -12,7 +12,6 @@ def execute(command, log_file = None):
 class Experiment:
     def __init__(self,
                  bf_executables,
-                 lucene_repo,
                  mg4j_repo,
                  pef_executables,
                  index_root,
@@ -24,7 +23,6 @@ class Experiment:
         self.bf_executable = bf_executables
         self.mg4j_repo = mg4j_repo
         self.pef_executable = pef_executables
-        self.lucene_repo = lucene_repo
 
         self.index_root = index_root
 
@@ -56,6 +54,9 @@ class Experiment:
 
         self.manifest = os.path.join(self.root, self.basename + "-manifest.txt")
 
+        # Java classpath for both mg4j and Lucene.
+        self.classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-shaded.jar")
+
         # BitFunnel variables
         # TODO: don't hard code density.
         self.bf_density = 0.15
@@ -66,11 +67,9 @@ class Experiment:
         self.bf_run_queries_log = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
 
         # Lucene variables.
-        self.lucene_classpath = os.path.join(self.lucene_repo, "target", "lucene-runner-1.0-SNAPSHOT.jar")
         self.lucene_run_queries_log = os.path.join(self.lucene_index_path, "run_lucene_queries_log.txt")
 
         # mg4j variables
-        self.mg4j_classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
         self.mg4j_basename = os.path.join(self.mg4j_index_path, self.basename)
         self.mg4j_build_index_log = os.path.join(self.mg4j_index_path, "build_mg4j_index_log.txt")
         self.mg4j_filter_queries_log = os.path.join(self.mg4j_index_path, "filter_mg4j_queries_log.txt")
@@ -138,7 +137,7 @@ class Experiment:
         args = ("java -cp {0} "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
                 "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence\({1}\) "
-                "{2}").format(self.mg4j_classpath, self.manifest, self.mg4j_basename)
+                "{2}").format(self.classpath, self.manifest, self.mg4j_basename)
         if not os.path.exists(self.mg4j_index_path):
             os.makedirs(self.mg4j_index_path)
         execute(args, self.mg4j_build_index_log)
@@ -147,7 +146,7 @@ class Experiment:
     def run_mg4j_queries(self):
         args = ("java -cp {0} "
                 "org.bitfunnel.reproducibility.QueryLogRunner "
-                "-t {1} {2} {3} {4}").format(self.mg4j_classpath,
+                "-t {1} {2} {3} {4}").format(self.classpath,
                                              self.thread_count,
                                              self.mg4j_basename,
                                              self.filtered_query_file,
@@ -159,7 +158,7 @@ class Experiment:
         args = ("java -cp {0} "
                 "org.bitfunnel.reproducibility.IndexExporter "
                 "{1} {2} "
-                "--queries {3}").format(self.mg4j_classpath,
+                "--queries {3}").format(self.classpath,
                                         self.mg4j_basename,
                                         self.query_path,
                                         self.root_query_file);
@@ -178,7 +177,7 @@ class Experiment:
 
         args = ("java -cp {0} "
                 "org.bitfunnel.reproducibility.IndexExporter "
-                "{1} {2} --index").format(self.mg4j_classpath, self.mg4j_basename, self.pef_basename);
+                "{1} {2} --index").format(self.classpath, self.mg4j_basename, self.pef_basename);
         execute(args, self.pef_build_collection_log)
 
 
@@ -274,7 +273,7 @@ class Experiment:
         #     os.makedirs(self.lucene_index_path)
         args = ("java -cp {0} "
                 "org.bitfunnel.runner.IndexBuilder "
-                "{1} {2} {3}").format(self.lucene_classpath,
+                "{1} {2} {3}").format(self.classpath,
                                       self.lucene_index_path,
                                       self.manifest,
                                       self.thread_count)
@@ -285,7 +284,7 @@ class Experiment:
     def run_lucene_queries(self):
         args = ("java -cp {0} "
                 "org.bitfunnel.runner.LuceneRunner "
-                "{1} {2} {3}").format(self.lucene_classpath,
+                "{1} {2} {3}").format(self.classpath,
                                       self.lucene_index_path,
                                       self.filtered_query_file,
                                       self.thread_count)
@@ -321,7 +320,6 @@ class Experiment:
 experiment_windows_273_150_100 = Experiment(
     # Paths to tools
     r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-    r"D:\git\LuceneRunner",
     r"D:\git\mg4j-workbench",
     r"/home/mhop/git/partitioned_elias_fano/bin",
 
@@ -341,7 +339,6 @@ experiment_windows_273_150_100 = Experiment(
 experiment_windows_273_1000_1500 = Experiment(
     # Paths to tools
     r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-    r"D:\git\LuceneRunner",
     r"D:\git\mg4j-workbench",
     r"/home/mhop/git/partitioned_elias_fano/bin",
 
@@ -361,7 +358,6 @@ experiment_windows_273_1000_1500 = Experiment(
 experiment_linux = Experiment(
     # Paths to tools
     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
-    r"/home/mhop/git/LuceneRunner",
     r"/home/mhop/git/mg4j-workbench",
     r"/home/mhop/git/partitioned_elias_fano/bin",
 
@@ -381,7 +377,6 @@ experiment_linux = Experiment(
 experiment_dl_linux = Experiment(
     # Paths to tools
     r"/home/danluu/dev/BitFunnel/build-ninja/tools/BitFunnel/src/BitFunnel",
-    r"/home/danluu/dev/LuceneRunner",
     r"/home/danluu/dev/mg4j-workbench",
     r"/home/danluu/dev/partitioned_elias_fano/bin",
 
@@ -404,7 +399,7 @@ def runxxx(experiment):
     # experiment.build_mg4j_index()
     # experiment.filter_query_log()
     # experiment.run_lucene_queries()
-    # experiment.run_mg4j_queries()
+    experiment.run_mg4j_queries()
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
     # experiment.build_lucene_index()
