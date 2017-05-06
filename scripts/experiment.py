@@ -57,6 +57,11 @@ class Experiment:
         # Java classpath for both mg4j and Lucene.
         self.classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-shaded.jar")
 
+        # Query-related variables
+        self.queries_basename = os.path.basename(self.queries)
+        self.query_path = os.path.join(self.root, "queries")
+        self.root_query_file = os.path.join(self.query_path, self.queries_basename)
+
         # BitFunnel variables
         # TODO: don't hard code density.
         self.bf_density = 0.15
@@ -67,10 +72,12 @@ class Experiment:
         self.bf_run_queries_log = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
 
         # Lucene variables.
+        self.lucene_results_file = os.path.join(self.lucene_index_path, self.queries_basename + "-results.csv")
         self.lucene_run_queries_log = os.path.join(self.lucene_index_path, "run_lucene_queries_log.txt")
 
         # mg4j variables
         self.mg4j_basename = os.path.join(self.mg4j_index_path, self.basename)
+        self.mg4j_results_file = os.path.join(self.mg4j_index_path, self.queries_basename + "-results.csv")
         self.mg4j_build_index_log = os.path.join(self.mg4j_index_path, "build_mg4j_index_log.txt")
         self.mg4j_filter_queries_log = os.path.join(self.mg4j_index_path, "filter_mg4j_queries_log.txt")
         self.mg4j_run_queries_log = os.path.join(self.mg4j_index_path, "run_mg4j_queries_log.txt")
@@ -82,23 +89,14 @@ class Experiment:
         self.pef_index_file = os.path.join(self.pef_index_path, self.basename + ".index." + self.pef_index_type)
         self.pef_creator = os.path.join(self.pef_executable, "create_freq_index")
         self.pef_runner = os.path.join(self.pef_executable, "Runner")
+        self.pef_results_file = os.path.join(self.pef_index_path, self.queries_basename + "-results.csv")
         self.pef_build_collection_log = os.path.join(self.pef_index_path, "build_pef_collection_log.txt")
         self.pef_build_index_log = os.path.join(self.pef_index_path, "build_pef_index_log.txt")
         self.pef_run_queries_log = os.path.join(self.pef_index_path, "run_pef_queries_log.txt")
 
-
-        # Query-related variables
-        self.queries_basename = os.path.basename(self.queries)
-        self.query_path = os.path.join(self.root, "queries")
-        self.root_query_file = os.path.join(self.query_path, self.queries_basename)
-
         # TODO: mapping to filtered query file is in Java right now. Can this be moved here?
         self.pef_query_file = os.path.join(self.query_path, self.queries_basename + "-in-index-ints.txt")
         self.filtered_query_file = os.path.join(self.query_path, self.queries_basename + "-in-index.txt")
-
-        self.pef_results_file = os.path.join(self.pef_index_path, self.queries_basename + "-results.csv")
-        self.mg4j_results_file = os.path.join(self.mg4j_index_path, self.queries_basename + "-results.csv")
-
 
 
     ###########################################################################
@@ -196,11 +194,11 @@ class Experiment:
 
     def run_pef_queries(self):
         args = ("{0} {1} {2} {3} {4} {5}").format(self.pef_runner,
-                                               self.pef_index_type,
-                                               self.pef_index_file,
-                                               self.pef_query_file,
-                                               self.thread_count,
-                                               self.pef_results_file)
+                                                  self.pef_index_type,
+                                                  self.pef_index_file,
+                                                  self.pef_query_file,
+                                                  self.thread_count,
+                                                  self.pef_results_file)
         execute(args, self.pef_run_queries_log)
 
 
@@ -287,7 +285,7 @@ class Experiment:
                 "lucene {1} {2} {3} {4}").format(self.classpath,
                                                  self.lucene_index_path,
                                                  self.filtered_query_file,
-                                                 self.mg4j_results_file,
+                                                 self.lucene_results_file,
                                                  self.thread_count)
         print(args)
         execute(args, self.lucene_run_queries_log)
@@ -400,14 +398,14 @@ def runxxx(experiment):
     # experiment.build_mg4j_index()
     # experiment.filter_query_log()
     # experiment.run_lucene_queries()
-    experiment.run_mg4j_queries()
+    # experiment.run_mg4j_queries()
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
     # experiment.build_lucene_index()
     experiment.run_lucene_queries()
     # experiment.pef_index_from_mg4j_index()
-    # experiment.run_pef_queries()
+    # xperiment.run_pef_queries()
 
-runxxx(experiment_windows_273_150_100)
+runxxx(experiment_windows_273_1000_1500)
 
 
