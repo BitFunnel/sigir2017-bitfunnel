@@ -376,6 +376,9 @@ class Experiment:
 
 
     def run_pef_queries(self):
+        # TODO: rework PEF Runner and run_pef_queries to put the for-loop over threads here.
+        # This will allow us to loop over a collection of thread counts instead of range(0, threadCount)
+        # which we do today.
         args = ("{0} {1} {2} {3} {4} {5}").format(self.pef_runner,
                                                   self.pef_index_type,
                                                   self.pef_index_file,
@@ -384,6 +387,31 @@ class Experiment:
                                                   self.pef_results_file)
         execute(args, self.pef_run_queries_log)
 
+
+    def analyze_pef_index(self):
+        results = IndexCharacteristics("PEF", self.thread_counts)
+
+        with open(self.pef_build_index_log, 'r') as myfile:
+            build_index_log = myfile.read()
+            results.set_float_field("bits_per_posting", '"bits_per_doc":', build_index_log)
+            results.set_float_field("total_ingestion_time", "collection built in", build_index_log)
+
+        for i, threads in enumerate(self.thread_counts):
+            query_summary_statistics = os.path.join(
+                self.pef_index_path,
+                "{0}-results.csv-summary-{1}.txt".format(self.queries_basename, threads))
+            with open(query_summary_statistics, 'r') as myfile:
+                data = myfile.read()
+                results.append_float_field("qps", "QPS:", data)
+                results.append_float_field("mean_query_latency", "Mean query latency:", data)
+                results.planning_overhead.append(math.nan)
+
+        # PEF false positive rate is always zero.
+        results.false_positive_rate = 0;
+        results.false_negative_rate = 0;
+
+        results.print()
+        return results
 
     ###########################################################################
     #
@@ -478,21 +506,6 @@ class Experiment:
     # Mean query latency: 0.000418855
     # Planning overhead (%): 0.0932795
     # QPS: 19170.4
-
-
-    def analyze_pef_index(self):
-        results = IndexCharacteristics()
-        results.index_type = "PEF"
-
-        with open(self.pef_build_index_log, 'r') as myfile:
-            build_index_log = myfile.read()
-            results.set_float_field("bits_per_posting", '"bits_per_doc":', build_index_log)
-            results.set_float_field("total_ingestion_time", "collection built in", build_index_log)
-
-        # with open(self.pef_run_queries_log, 'r') as myfile:
-        #     run_queries_log = myfile.read()
-
-        results.print()
 
 
 
@@ -670,10 +683,10 @@ def runxxx(experiment):
     # Analyze logs to produce summary report.
     # experiment.analyze_bf_index()
     # print()
-    experiment.analyze_mg4j_index()
+    # experiment.analyze_mg4j_index()
     # print()
     # experiment.analyze_lucene_index()
     # print()
-    # experiment.analyze_pef_index()
+    experiment.analyze_pef_index()
 
 runxxx(experiment_windows_273_150_100)
