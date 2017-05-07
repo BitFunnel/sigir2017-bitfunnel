@@ -1,8 +1,10 @@
 import csv
 import itertools
+import math
 import os
 import re
 from bf_utilities import run
+
 
 def execute(command, log_file = None):
     print(command)
@@ -75,6 +77,7 @@ class Experiment:
 
         # Lucene variables.
         self.lucene_results_file = os.path.join(self.lucene_index_path, self.queries_basename + "-results.csv")
+        self.lucene_build_index_log = os.path.join(self.lucene_index_path, "build_lucene_index_log.txt")
         self.lucene_run_queries_log = os.path.join(self.lucene_index_path, "run_lucene_queries_log.txt")
 
         # mg4j variables
@@ -268,9 +271,9 @@ class Experiment:
     #
     ###########################################################################
     def build_lucene_index(self):
-        # if not os.path.exists(self.lucene_index_path):
-        #     print("mkdir " + self.lucene_index_path)
-        #     os.makedirs(self.lucene_index_path)
+        if not os.path.exists(self.lucene_index_path):
+            print("mkdir " + self.lucene_index_path)
+            os.makedirs(self.lucene_index_path)
         args = ("java -cp {0} "
                 "org.bitfunnel.runner.IndexBuilder "
                 "{1} {2} {3}").format(self.classpath,
@@ -278,7 +281,7 @@ class Experiment:
                                       self.manifest,
                                       self.thread_count)
         print(args)
-        execute(args, self.lucene_run_queries_log)
+        execute(args, self.lucene_build_index_log)
 
 
     def run_lucene_queries(self):
@@ -322,7 +325,7 @@ class Experiment:
     # False positive rate
     #
     ###########################################################################
-    def compute_false_positive_rate(self):
+    def compute_false_positive_rate(self, results):
         bf = os.path.join(self.bf_index_path, "results-1\QueryPipelineStatistics.csv");
         mg4j = self.mg4j_results_file
 
@@ -355,22 +358,158 @@ class Experiment:
                     false_negatives += (mg4j_matches - bf_matches)
                     false_negative_queries += 1
 
-                # count += 1
-                # if count > 2:
-                #     break
+        results.total_matches = total_matches
+        results.total_queries = total_queries
+        results.false_positives = false_positives
+        results.false_positive_queries = false_positive_queries
+        results.false_positive_rate = false_positives / total_matches
+        results.false_negatives = false_negatives
+        results.false_negative_queries = false_negative_queries
+        results.false_negative_rate = false_negatives / total_matches
 
-        print("Total matches: {0}".format(total_matches))
-        print("Total queries: {0}".format(total_queries))
 
-        print("False positives: {0}".format(false_positives))
-        print("False positive queries: {0}".format(false_positive_queries))
-        print("False positive rate: {0}".format(false_positives / total_matches))
-        print("False positive query rate: {0}".format(false_positive_queries / total_queries))
+    ###########################################################################
+    #
+    # Analyze
+    #
+    ###########################################################################
+    def anayze_corpus(self):
+        # Documents
+        # Terms
+        # Postings
+        pass
 
-        print("False negatives: {0}".format(false_negatives))
-        print("False negative queries: {0}".format(false_negative_queries))
-        print("False negative rate: {0}".format(false_negatives / total_matches))
-        print("False negative query rate: {0}".format(false_negative_queries / total_queries))
+    # Index type: BitFunnel
+    # TODO: Thread count: 8 - also let user pick best thread count instead of using self.thread_count
+    # Unique queries: 97113
+    # TODO: Queries processed: 97113
+    # Elapsed time: 5.06577
+    # Total parsing latency: 0.289529
+    # Total planning latency: 3.50474
+    # Total matching latency: 36.882
+    # Mean query latency: 0.000418855
+    # Planning overhead (%): 0.0932795
+    # QPS: 19170.4
+    def analyze_bf_index(self):
+        results = IndexCharacteristics()
+        results.index_type = "BitFunnel"
+
+        with open(self.bf_run_queries_log, 'r') as myfile:
+            run_queries_log = myfile.read()
+
+        results.set_float_field("bits_per_posting", "Bits per posting:", run_queries_log)
+        results.set_float_field("total_ingestion_time", "Total ingestion time:", run_queries_log)
+        results.set_float_field("planning_overhead", r"Planning overhead \(%\):", run_queries_log)
+
+        query_summary_statistics = os.path.join(self.bf_index_path,
+                                                "results-{0}".format(self.thread_count),
+                                                "QuerySummaryStatistics.txt")
+        with open(query_summary_statistics, 'r') as myfile:
+            data = myfile.read()
+
+        results.set_float_field("qps", "QPS:", data)
+        results.set_float_field("mean_query_latency", "Mean query latency:", data)
+
+        self.compute_false_positive_rate(results);
+
+        results.print()
+
+
+    def analyze_mg4j_index(self):
+        results = IndexCharacteristics()
+        results.index_type = "MG4J"
+
+        with open(self.mg4j_run_queries_log, 'r') as myfile:
+            run_queries_log = myfile.read()
+
+            posting_count = float(re.findall("postings=(\d+\.?\d+)", run_queries_log)[0])
+            pointers = os.path.join(self.mg4j_index_path, self.basename + "-text.pointers");
+            results.bits_per_posting = os.path.getsize(pointers) / posting_count * 8.0
+
+        # Need to annotate build log from Python since Java code doesn't print time.
+        results.total_ingestion_time = math.nan
+
+        run_queries_log = os.path.join(self.mg4j_run_queries_log)
+        with open(run_queries_log, 'r') as myfile:
+            data = myfile.read()
+
+        results.set_float_field("qps", "QPS:", data)
+        results.set_float_field("mean_query_latency", "Mean query latency:", data)
+
+        # MG4J false positive rate is always zero.
+        results.false_positive_rate = 0;
+        results.false_negative_rate = 0;
+
+        results.print()
+
+
+    def analyze_lucene_index(self):
+        results = IndexCharacteristics()
+        results.index_type = "Lucene"
+
+        # Don't know how to determine bits per posting for Lucene.
+        results.bits_per_posting = math.nan
+
+        with open(self.lucene_build_index_log, 'r') as myfile:
+            build_index_log = myfile.read()
+            results.total_ingestion_time = \
+                float(re.findall("Ingested \d+ chunk files in (\d+\.?\d+) seconds.", build_index_log)[0])
+
+
+        run_queries_log = os.path.join(self.lucene_run_queries_log)
+        with open(run_queries_log, 'r') as myfile:
+            data = myfile.read()
+
+        results.set_float_field("qps", "QPS:", data)
+        results.set_float_field("mean_query_latency", "Mean query latency:", data)
+
+        # Lucene false positive rate is always zero.
+        results.false_positive_rate = 0;
+        results.false_negative_rate = 0;
+
+        results.print()
+
+
+    def analyze_pef_index(self):
+        results = IndexCharacteristics()
+        results.index_type = "PEF"
+
+        with open(self.pef_build_index_log, 'r') as myfile:
+            build_index_log = myfile.read()
+            results.set_float_field("bits_per_posting", '"bits_per_doc":', build_index_log)
+            results.set_float_field("total_ingestion_time", "collection built in", build_index_log)
+
+        # with open(self.pef_run_queries_log, 'r') as myfile:
+        #     run_queries_log = myfile.read()
+
+        results.print()
+
+
+class IndexCharacteristics(object):
+    def __init__(self):
+        self.index_type = None
+        self.bits_per_posting = math.nan
+        self.total_ingestion_time = math.nan
+        self.qps = math.nan
+        self.mean_query_latency = math.nan
+        self.planning_overhead = math.nan
+        self.false_positive_rate = math.nan
+        self.false_negative_rate = math.nan
+
+
+    def set_float_field(self, property, text, log_data):
+        value = float(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
+        setattr(self, property, value)
+
+    def print(self):
+        print("Index type: {0}".format(self.index_type))
+        print("Bits/posting: {0}".format(self.bits_per_posting))
+        print("Ingestion time: {0}".format(self.total_ingestion_time))
+        print("QPS: {0}".format(self.qps))
+        print("Mean query latency: {0}".format(self.mean_query_latency))
+        print("Planning overhead: {0}".format(self.planning_overhead))
+        print("False positive rate: {0}".format(self.false_positive_rate))
+        print("False negative rate: {0}".format(self.false_negative_rate))
 
 
 experiment_windows_273_150_100 = Experiment(
@@ -460,11 +599,16 @@ def runxxx(experiment):
     # experiment.run_bf_queries()
     # experiment.build_lucene_index()
     # experiment.run_lucene_queries()
-    # experiment.pef_index_from_mg4j_index()
+    # experiment.build_pef_collection()
+    # experiment.build_pef_index()
     # experiment.run_pef_queries()
-    experiment.compute_false_positive_rate()
-
+    # experiment.compute_false_positive_rate()
+    # experiment.analyze_bf_index()
+    # print()
+    # experiment.analyze_mg4j_index()
+    # print()
+    # experiment.analyze_lucene_index()
+    # print()
+    # experiment.analyze_pef_index()
 
 runxxx(experiment_windows_273_150_100)
-
-
