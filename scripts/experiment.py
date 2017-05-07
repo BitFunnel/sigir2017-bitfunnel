@@ -132,83 +132,6 @@ class Experiment:
 
     ###########################################################################
     #
-    # mg4j
-    #
-    ###########################################################################
-
-    def build_mg4j_index(self):
-        args = ("java -cp {0} "
-                "it.unimi.di.big.mg4j.tool.IndexBuilder "
-                "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence\({1}\) "
-                "{2}").format(self.classpath, self.manifest, self.mg4j_basename)
-        if not os.path.exists(self.mg4j_index_path):
-            os.makedirs(self.mg4j_index_path)
-        execute(args, self.mg4j_build_index_log)
-
-
-    def run_mg4j_queries(self):
-        args = ("java -cp {0} "
-                "org.bitfunnel.reproducibility.QueryLogRunner "
-                "mg4j {1} {2} {3} {4}").format(self.classpath,
-                                               self.mg4j_basename,
-                                               self.filtered_query_file,
-                                               self.mg4j_results_file,
-                                               self.thread_count)
-        execute(args, self.mg4j_run_queries_log)
-
-
-    def filter_query_log(self):
-        args = ("java -cp {0} "
-                "org.bitfunnel.reproducibility.IndexExporter "
-                "{1} {2} "
-                "--queries {3}").format(self.classpath,
-                                        self.mg4j_basename,
-                                        self.query_path,
-                                        self.root_query_file);
-        execute(args, self.mg4j_filter_queries_log)
-
-
-    ###########################################################################
-    #
-    # Partitioned Elias-Fano (PEF)
-    #
-    ###########################################################################
-
-    def build_pef_collection(self):
-        if not os.path.exists(self.pef_index_path):
-            os.makedirs(self.pef_index_path)
-
-        args = ("java -cp {0} "
-                "org.bitfunnel.reproducibility.IndexExporter "
-                "{1} {2} --index").format(self.classpath, self.mg4j_basename, self.pef_basename);
-        execute(args, self.pef_build_collection_log)
-
-
-    def build_pef_index(self):
-        args = ("{0} {1} {2} {3}").format(self.pef_creator,
-                                          self.pef_index_type,
-                                          self.pef_collection,
-                                          self.pef_index_file)
-        execute(args, self.pef_build_index_log)
-
-
-    def pef_index_from_mg4j_index(params):
-        params.build_pef_collection()
-        params.build_pef_index()
-
-
-    def run_pef_queries(self):
-        args = ("{0} {1} {2} {3} {4} {5}").format(self.pef_runner,
-                                                  self.pef_index_type,
-                                                  self.pef_index_file,
-                                                  self.pef_query_file,
-                                                  self.thread_count,
-                                                  self.pef_results_file)
-        execute(args, self.pef_run_queries_log)
-
-
-    ###########################################################################
-    #
     # BitFunnel
     #
     ###########################################################################
@@ -298,6 +221,83 @@ class Experiment:
 
     ###########################################################################
     #
+    # MG4J
+    #
+    ###########################################################################
+
+    def build_mg4j_index(self):
+        args = ("java -cp {0} "
+                "it.unimi.di.big.mg4j.tool.IndexBuilder "
+                "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence\({1}\) "
+                "{2}").format(self.classpath, self.manifest, self.mg4j_basename)
+        if not os.path.exists(self.mg4j_index_path):
+            os.makedirs(self.mg4j_index_path)
+        execute(args, self.mg4j_build_index_log)
+
+
+    def run_mg4j_queries(self):
+        args = ("java -cp {0} "
+                "org.bitfunnel.reproducibility.QueryLogRunner "
+                "mg4j {1} {2} {3} {4}").format(self.classpath,
+                                               self.mg4j_basename,
+                                               self.filtered_query_file,
+                                               self.mg4j_results_file,
+                                               self.thread_count)
+        execute(args, self.mg4j_run_queries_log)
+
+
+    def filter_query_log(self):
+        args = ("java -cp {0} "
+                "org.bitfunnel.reproducibility.IndexExporter "
+                "{1} {2} "
+                "--queries {3}").format(self.classpath,
+                                        self.mg4j_basename,
+                                        self.query_path,
+                                        self.root_query_file);
+        execute(args, self.mg4j_filter_queries_log)
+
+
+    ###########################################################################
+    #
+    # Partitioned Elias-Fano (PEF)
+    #
+    ###########################################################################
+
+    def build_pef_collection(self):
+        if not os.path.exists(self.pef_index_path):
+            os.makedirs(self.pef_index_path)
+
+        args = ("java -cp {0} "
+                "org.bitfunnel.reproducibility.IndexExporter "
+                "{1} {2} --index").format(self.classpath, self.mg4j_basename, self.pef_basename);
+        execute(args, self.pef_build_collection_log)
+
+
+    def build_pef_index(self):
+        args = ("{0} {1} {2} {3}").format(self.pef_creator,
+                                          self.pef_index_type,
+                                          self.pef_collection,
+                                          self.pef_index_file)
+        execute(args, self.pef_build_index_log)
+
+
+    def pef_index_from_mg4j_index(params):
+        params.build_pef_collection()
+        params.build_pef_index()
+
+
+    def run_pef_queries(self):
+        args = ("{0} {1} {2} {3} {4} {5}").format(self.pef_runner,
+                                                  self.pef_index_type,
+                                                  self.pef_index_file,
+                                                  self.pef_query_file,
+                                                  self.thread_count,
+                                                  self.pef_results_file)
+        execute(args, self.pef_run_queries_log)
+
+
+    ###########################################################################
+    #
     # Chunk manifests
     #
     ###########################################################################
@@ -344,7 +344,6 @@ class Experiment:
             bf_reader = csv.reader(bf_results, delimiter=',', quotechar='|')
             mg4j_reader = csv.reader(mg4j_results, delimiter=',', quotechar='|')
             for bfRow, mg4jRow in itertools.zip_longest(bf_reader, mg4j_reader):
-#                print(bfRow, mg4jRow)
                 bf_matches = int(bfRow[2])
                 mg4j_matches = int(mg4jRow[1])
 
