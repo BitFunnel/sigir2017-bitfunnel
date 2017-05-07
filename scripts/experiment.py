@@ -216,7 +216,7 @@ class Experiment:
                                                     "QuerySummaryStatistics.txt")
             with open(query_summary_statistics, 'r') as myfile:
                 data = myfile.read()
-                results.append_float_field("planning_overhead", r"Planning overhead \(%\):", data)
+                results.append_float_field("planning_overhead", r"Planning overhead:", data)
                 results.append_float_field("qps", "QPS:", data)
                 results.append_float_field("mean_query_latency", "Mean query latency:", data)
 
@@ -275,7 +275,7 @@ class Experiment:
                 data = myfile.read()
                 results.append_float_field("qps", "QPS:", data)
                 results.append_float_field("mean_query_latency", "Mean query latency:", data)
-                results.planning_overhead.append(math.nan)
+                results.append_float_field("planning_overhead", r"Planning overhead:", data)
 
         # Lucene false positive rate is always zero.
         results.false_positive_rate = 0;
@@ -403,7 +403,9 @@ class Experiment:
                 data = myfile.read()
                 results.append_float_field("qps", "QPS:", data)
                 results.append_float_field("mean_query_latency", "Mean query latency:", data)
-                results.planning_overhead.append(math.nan)
+
+                # PEF does no parsing and planning.
+                results.planning_overhead.append(0)
 
         # PEF false positive rate is always zero.
         results.false_positive_rate = 0;
@@ -724,12 +726,12 @@ def runxxx(experiment):
 
     # BitFunnel
     # experiment.build_bf_index()
-    # experiment.run_bf_queries()
+    experiment.run_bf_queries()
     # experiment.compute_false_positive_rate()
 
     # Lucene
     # experiment.build_lucene_index()
-    # experiment.run_lucene_queries()
+    experiment.run_lucene_queries()
 
     # MG4J
     # experiment.run_mg4j_queries()
