@@ -22,7 +22,9 @@ class Experiment:
                  basename,
                  chunk_dir,
                  chunk_pattern,
-                 queries):
+                 queries,
+                 min_thread_count,
+                 max_thread_count):
 
         self.bf_executable = bf_executables
         self.mg4j_repo = mg4j_repo
@@ -35,7 +37,8 @@ class Experiment:
         self.basename = basename
         self.queries = queries;
 
-        self.thread_count = 8
+        self.min_thread_count = min_thread_count
+        self.max_thread_count = max_thread_count
         self.pef_index_type = 'opt'
 
         self.update()
@@ -61,6 +64,8 @@ class Experiment:
         # Java classpath for both mg4j and Lucene.
         self.classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-shaded.jar")
 
+        self.thread_counts = range(self.min_thread_count, self.max_thread_count + 1)
+
         # Query-related variables
         self.queries_basename = os.path.basename(self.queries)
         self.query_path = os.path.join(self.root, "queries")
@@ -76,16 +81,26 @@ class Experiment:
         self.bf_run_queries_log = os.path.join(self.bf_index_path, "run_bf_queries_log.txt")
 
         # Lucene variables.
-        self.lucene_results_file = os.path.join(self.lucene_index_path, self.queries_basename + "-results.csv")
         self.lucene_build_index_log = os.path.join(self.lucene_index_path, "build_lucene_index_log.txt")
-        self.lucene_run_queries_log = os.path.join(self.lucene_index_path, "run_lucene_queries_log.txt")
+        self.lucene_results_file = []
+        self.lucene_run_queries_log = []
+        for i, threads in enumerate(self.thread_counts):
+            filename = "{0}-results-{1}.csv".format(self.queries_basename, threads)
+            self.lucene_results_file.append(os.path.join(self.lucene_index_path, filename))
+            filename = "run_lucene_queries_log-{0}.txt".format(threads)
+            self.lucene_run_queries_log.append(os.path.join(self.lucene_index_path, filename))
 
         # mg4j variables
         self.mg4j_basename = os.path.join(self.mg4j_index_path, self.basename)
-        self.mg4j_results_file = os.path.join(self.mg4j_index_path, self.queries_basename + "-results.csv")
         self.mg4j_build_index_log = os.path.join(self.mg4j_index_path, "build_mg4j_index_log.txt")
+        self.mg4j_results_file = []
+        self.mg4j_run_queries_log = []
         self.mg4j_filter_queries_log = os.path.join(self.mg4j_index_path, "filter_mg4j_queries_log.txt")
-        self.mg4j_run_queries_log = os.path.join(self.mg4j_index_path, "run_mg4j_queries_log.txt")
+        for i, threads in enumerate(self.thread_counts):
+            filename = "{0}-results-{1}.csv".format(self.queries_basename, threads)
+            self.mg4j_results_file.append(os.path.join(self.mg4j_index_path, filename))
+            filename = "run_mg4j_queries_log-{0}.txt".format(threads)
+            self.mg4j_run_queries_log.append(os.path.join(self.mg4j_index_path, filename))
 
         # Partitioned ELias-Fano variables
         self.pef_basename = os.path.join(self.pef_index_path, self.basename)
@@ -163,21 +178,19 @@ class Experiment:
         # Create script file
         # TODO: reinstate following lines.
         with open(self.bf_repl_script, "w") as file:
-        # file = sys.stdout
-            for i in range(0,1):
-                file.write("load manifest {0}\n".format(self.manifest));
-                file.write("status\n");
-                file.write("compiler\n");
-                for t in range(1, self.thread_count + 1):
-                    results_dir = os.path.join(self.bf_index_path, "results-{0}".format(t))
-                    if not os.path.exists(results_dir):
-                        print("mkdir " + results_dir)
-                        os.makedirs(results_dir)
-                    file.write("threads {0}\n".format(t))
-                    file.write("cd {0}\n".format(results_dir))
-                    file.write("query log {0}\n".format(self.filtered_query_file))
+            file.write("load manifest {0}\n".format(self.manifest));
+            file.write("status\n");
+            file.write("compiler\n");
+            for index, threads in enumerate(self.thread_counts):
+                results_dir = os.path.join(self.bf_index_path, "results-{0}".format(threads))
+                if not os.path.exists(results_dir):
+                    print("mkdir " + results_dir)
+                    os.makedirs(results_dir)
+                file.write("threads {0}\n".format(threads))
+                file.write("cd {0}\n".format(results_dir))
+                file.write("query log {0}\n".format(self.filtered_query_file))
 
-                file.write("quit\n")
+            file.write("quit\n")
 
         # Start BitFunnel repl
         args = ("{0} repl {1} -script {2}").format(self.bf_executable,
@@ -186,6 +199,29 @@ class Experiment:
         execute(args, self.bf_run_queries_log)
 
 
+
+    def analyze_bf_index(self):
+        results = IndexCharacteristics("BitFunnel", self.thread_counts)
+
+        with open(self.bf_run_queries_log, 'r') as myfile:
+            run_queries_log = myfile.read()
+            results.set_float_field("bits_per_posting", "Bits per posting:", run_queries_log)
+            results.set_float_field("total_ingestion_time", "Total ingestion time:", run_queries_log)
+
+        for i, threads in enumerate(self.thread_counts):
+            query_summary_statistics = os.path.join(self.bf_index_path,
+                                                    "results-{0}".format(threads),
+                                                    "QuerySummaryStatistics.txt")
+            with open(query_summary_statistics, 'r') as myfile:
+                data = myfile.read()
+                results.append_float_field("planning_overhead", r"Planning overhead \(%\):", data)
+                results.append_float_field("qps", "QPS:", data)
+                results.append_float_field("mean_query_latency", "Mean query latency:", data)
+
+        self.compute_false_positive_rate(results);
+
+        results.print()
+        return results
 
 
     ###########################################################################
@@ -202,21 +238,50 @@ class Experiment:
                 "{1} {2} {3}").format(self.classpath,
                                       self.lucene_index_path,
                                       self.manifest,
-                                      self.thread_count)
+                                      self.max_thread_count)
         print(args)
         execute(args, self.lucene_build_index_log)
 
 
     def run_lucene_queries(self):
-        args = ("java -cp {0} "
-                "org.bitfunnel.reproducibility.QueryLogRunner "
-                "lucene {1} {2} {3} {4}").format(self.classpath,
-                                                 self.lucene_index_path,
-                                                 self.filtered_query_file,
-                                                 self.lucene_results_file,
-                                                 self.thread_count)
-        print(args)
-        execute(args, self.lucene_run_queries_log)
+        for i, threads in enumerate(self.thread_counts):
+            args = ("java -cp {0} "
+                    "org.bitfunnel.reproducibility.QueryLogRunner "
+                    "lucene {1} {2} {3} {4}").format(self.classpath,
+                                                     self.lucene_index_path,
+                                                     self.filtered_query_file,
+                                                     self.lucene_results_file[i],
+                                                     threads)
+            print(args)
+            execute(args, self.lucene_run_queries_log[i])
+
+
+    def analyze_lucene_index(self):
+        results = IndexCharacteristics("Lucene", self.thread_counts)
+        results.index_type = "Lucene"
+
+        # Don't know how to determine bits per posting for Lucene.
+        results.bits_per_posting = math.nan
+
+        with open(self.lucene_build_index_log, 'r') as myfile:
+            build_index_log = myfile.read()
+            results.total_ingestion_time = \
+                float(re.findall("Ingested \d+ chunk files in (\d+\.?\d+) seconds.", build_index_log)[0])
+
+        for i, threads in enumerate(self.thread_counts):
+            run_queries_log = self.lucene_run_queries_log[i]
+            with open(run_queries_log, 'r') as myfile:
+                data = myfile.read()
+                results.append_float_field("qps", "QPS:", data)
+                results.append_float_field("mean_query_latency", "Mean query latency:", data)
+                results.planning_overhead.append(math.nan)
+
+        # Lucene false positive rate is always zero.
+        results.false_positive_rate = 0;
+        results.false_negative_rate = 0;
+
+        results.print()
+        return results
 
 
     ###########################################################################
@@ -224,7 +289,6 @@ class Experiment:
     # MG4J
     #
     ###########################################################################
-
     def build_mg4j_index(self):
         args = ("java -cp {0} "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
@@ -236,14 +300,15 @@ class Experiment:
 
 
     def run_mg4j_queries(self):
-        args = ("java -cp {0} "
-                "org.bitfunnel.reproducibility.QueryLogRunner "
-                "mg4j {1} {2} {3} {4}").format(self.classpath,
-                                               self.mg4j_basename,
-                                               self.filtered_query_file,
-                                               self.mg4j_results_file,
-                                               self.thread_count)
-        execute(args, self.mg4j_run_queries_log)
+        for i, threads in enumerate(self.thread_counts):
+            args = ("java -cp {0} "
+                    "org.bitfunnel.reproducibility.QueryLogRunner "
+                    "mg4j {1} {2} {3} {4}").format(self.classpath,
+                                                   self.mg4j_basename,
+                                                   self.filtered_query_file,
+                                                   self.mg4j_results_file[i],
+                                                   threads)
+            execute(args, self.mg4j_run_queries_log[i])
 
 
     def filter_query_log(self):
@@ -257,12 +322,41 @@ class Experiment:
         execute(args, self.mg4j_filter_queries_log)
 
 
+    def analyze_mg4j_index(self):
+        results = IndexCharacteristics("MG4J", self.thread_counts)
+
+        # Compute bits/posting.
+        with open(self.mg4j_run_queries_log[0], 'r') as myfile:
+            run_queries_log = myfile.read()
+
+            posting_count = float(re.findall("postings=(\d+\.?\d+)", run_queries_log)[0])
+            pointers = os.path.join(self.mg4j_index_path, self.basename + "-text.pointers");
+            results.bits_per_posting = os.path.getsize(pointers) / posting_count * 8.0
+
+        # Need to annotate build log from Python since Java code doesn't print time.
+        results.total_ingestion_time = math.nan
+
+        for i, threads in enumerate(self.thread_counts):
+            run_queries_log = self.mg4j_run_queries_log[i]
+            with open(run_queries_log, 'r') as myfile:
+                data = myfile.read()
+            results.append_float_field("qps", "QPS:", data)
+            results.append_float_field("mean_query_latency", "Mean query latency:", data)
+            results.planning_overhead.append(math.nan)
+
+        # MG4J false positive rate is always zero.
+        results.false_positive_rate = 0;
+        results.false_negative_rate = 0;
+
+        results.print()
+        return results
+
+
     ###########################################################################
     #
     # Partitioned Elias-Fano (PEF)
     #
     ###########################################################################
-
     def build_pef_collection(self):
         if not os.path.exists(self.pef_index_path):
             os.makedirs(self.pef_index_path)
@@ -281,17 +375,12 @@ class Experiment:
         execute(args, self.pef_build_index_log)
 
 
-    def pef_index_from_mg4j_index(params):
-        params.build_pef_collection()
-        params.build_pef_index()
-
-
     def run_pef_queries(self):
         args = ("{0} {1} {2} {3} {4} {5}").format(self.pef_runner,
                                                   self.pef_index_type,
                                                   self.pef_index_file,
                                                   self.pef_query_file,
-                                                  self.thread_count,
+                                                  self.max_thread_count,
                                                   self.pef_results_file)
         execute(args, self.pef_run_queries_log)
 
@@ -379,7 +468,7 @@ class Experiment:
         pass
 
     # Index type: BitFunnel
-    # TODO: Thread count: 8 - also let user pick best thread count instead of using self.thread_count
+    # TODO: Thread count: 8 - also let user pick best thread count instead of using self.max_thread_count
     # Unique queries: 97113
     # TODO: Queries processed: 97113
     # Elapsed time: 5.06577
@@ -389,84 +478,6 @@ class Experiment:
     # Mean query latency: 0.000418855
     # Planning overhead (%): 0.0932795
     # QPS: 19170.4
-    def analyze_bf_index(self):
-        results = IndexCharacteristics()
-        results.index_type = "BitFunnel"
-
-        with open(self.bf_run_queries_log, 'r') as myfile:
-            run_queries_log = myfile.read()
-
-        results.set_float_field("bits_per_posting", "Bits per posting:", run_queries_log)
-        results.set_float_field("total_ingestion_time", "Total ingestion time:", run_queries_log)
-        results.set_float_field("planning_overhead", r"Planning overhead \(%\):", run_queries_log)
-
-        query_summary_statistics = os.path.join(self.bf_index_path,
-                                                "results-{0}".format(self.thread_count),
-                                                "QuerySummaryStatistics.txt")
-        with open(query_summary_statistics, 'r') as myfile:
-            data = myfile.read()
-
-        results.set_float_field("qps", "QPS:", data)
-        results.set_float_field("mean_query_latency", "Mean query latency:", data)
-
-        self.compute_false_positive_rate(results);
-
-        results.print()
-
-
-    def analyze_mg4j_index(self):
-        results = IndexCharacteristics()
-        results.index_type = "MG4J"
-
-        with open(self.mg4j_run_queries_log, 'r') as myfile:
-            run_queries_log = myfile.read()
-
-            posting_count = float(re.findall("postings=(\d+\.?\d+)", run_queries_log)[0])
-            pointers = os.path.join(self.mg4j_index_path, self.basename + "-text.pointers");
-            results.bits_per_posting = os.path.getsize(pointers) / posting_count * 8.0
-
-        # Need to annotate build log from Python since Java code doesn't print time.
-        results.total_ingestion_time = math.nan
-
-        run_queries_log = os.path.join(self.mg4j_run_queries_log)
-        with open(run_queries_log, 'r') as myfile:
-            data = myfile.read()
-
-        results.set_float_field("qps", "QPS:", data)
-        results.set_float_field("mean_query_latency", "Mean query latency:", data)
-
-        # MG4J false positive rate is always zero.
-        results.false_positive_rate = 0;
-        results.false_negative_rate = 0;
-
-        results.print()
-
-
-    def analyze_lucene_index(self):
-        results = IndexCharacteristics()
-        results.index_type = "Lucene"
-
-        # Don't know how to determine bits per posting for Lucene.
-        results.bits_per_posting = math.nan
-
-        with open(self.lucene_build_index_log, 'r') as myfile:
-            build_index_log = myfile.read()
-            results.total_ingestion_time = \
-                float(re.findall("Ingested \d+ chunk files in (\d+\.?\d+) seconds.", build_index_log)[0])
-
-
-        run_queries_log = os.path.join(self.lucene_run_queries_log)
-        with open(run_queries_log, 'r') as myfile:
-            data = myfile.read()
-
-        results.set_float_field("qps", "QPS:", data)
-        results.set_float_field("mean_query_latency", "Mean query latency:", data)
-
-        # Lucene false positive rate is always zero.
-        results.false_positive_rate = 0;
-        results.false_negative_rate = 0;
-
-        results.print()
 
 
     def analyze_pef_index(self):
@@ -484,33 +495,56 @@ class Experiment:
         results.print()
 
 
+
+###########################################################################
+#
+# IndexCharacteristics
+#
+###########################################################################
 class IndexCharacteristics(object):
-    def __init__(self):
-        self.index_type = None
+    def __init__(self, index_type, thread_counts):
+        self.index_type = index_type
+        self.thread_counts = thread_counts
         self.bits_per_posting = math.nan
         self.total_ingestion_time = math.nan
-        self.qps = math.nan
-        self.mean_query_latency = math.nan
-        self.planning_overhead = math.nan
         self.false_positive_rate = math.nan
         self.false_negative_rate = math.nan
+        self.qps = []
+        self.mean_query_latency = []
+        self.planning_overhead = []
+
 
 
     def set_float_field(self, property, text, log_data):
         value = float(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
         setattr(self, property, value)
 
+
+    def append_float_field(self, property, text, log_data):
+        value = float(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
+        value_list = getattr(self, property)
+        value_list.append(value)
+
+
     def print(self):
         print("Index type: {0}".format(self.index_type))
         print("Bits/posting: {0}".format(self.bits_per_posting))
         print("Ingestion time: {0}".format(self.total_ingestion_time))
-        print("QPS: {0}".format(self.qps))
-        print("Mean query latency: {0}".format(self.mean_query_latency))
-        print("Planning overhead: {0}".format(self.planning_overhead))
         print("False positive rate: {0}".format(self.false_positive_rate))
         print("False negative rate: {0}".format(self.false_negative_rate))
+        for i, threads in enumerate(self.thread_counts):
+            print("{0} query threads:".format(threads))
+            print("  QPS: {0}".format(self.qps[i]))
+            print("  Mean query latency: {0}".format(self.mean_query_latency[i]))
+            print("  Planning overhead: {0}".format(self.planning_overhead[i]))
 
 
+
+###########################################################################
+#
+# Experiments
+#
+###########################################################################
 experiment_windows_273_150_100 = Experiment(
     # Paths to tools
     r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
@@ -527,7 +561,11 @@ experiment_windows_273_150_100 = Experiment(
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
-    r"D:\sigir\queries\06.efficiency_topics.all"
+    r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # Min and max thread counts
+    7,
+    8
 )
 
 experiment_windows_273_1000_1500 = Experiment(
@@ -546,7 +584,11 @@ experiment_windows_273_1000_1500 = Experiment(
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
-    r"D:\sigir\queries\06.efficiency_topics.all"
+    r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # Min and max thread counts
+    1,
+    8
 )
 
 experiment_linux = Experiment(
@@ -565,7 +607,11 @@ experiment_linux = Experiment(
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
-    r"/home/mhop/git/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all"
+    r"/home/mhop/git/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all",
+
+    # Min and max thread counts
+    1,
+    8
 )
 
 experiment_dl_linux = Experiment(
@@ -584,27 +630,47 @@ experiment_dl_linux = Experiment(
     r"GX000.*",  # Use all chunks
 
     # The query log to be used for this experiment.
-    r"/home/danluu/Downloads/06.efficiency_topics.all"
+    r"/home/danluu/Downloads/06.efficiency_topics.all",
+
+    # Min and max thread counts
+    1,
+    8
 )
+
 
 def runxxx(experiment):
     # experiment.fix_query_log()
     # experiment.build_chunk_manifest()
+
+    # Must build the mg4j index before filtering the query log
     # experiment.build_mg4j_index()
+
+    # Must filter the query log before running any queries.
     # experiment.filter_query_log()
-    # experiment.run_lucene_queries()
-    # experiment.run_mg4j_queries()
+
+    # Now we're ready to run queries.
+
+    # BitFunnel
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
+    # experiment.compute_false_positive_rate()
+
+    # Lucene
     # experiment.build_lucene_index()
     # experiment.run_lucene_queries()
+
+    # MG4J
+    # experiment.run_mg4j_queries()
+
+    # PEF
     # experiment.build_pef_collection()
     # experiment.build_pef_index()
     # experiment.run_pef_queries()
-    # experiment.compute_false_positive_rate()
+
+    # Analyze logs to produce summary report.
     # experiment.analyze_bf_index()
     # print()
-    # experiment.analyze_mg4j_index()
+    experiment.analyze_mg4j_index()
     # print()
     # experiment.analyze_lucene_index()
     # print()
