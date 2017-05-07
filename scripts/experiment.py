@@ -23,6 +23,7 @@ class Experiment:
                  chunk_dir,
                  chunk_pattern,
                  queries,
+                 ingestion_thread_count,
                  min_thread_count,
                  max_thread_count):
 
@@ -36,6 +37,8 @@ class Experiment:
         self.chunk_pattern = chunk_pattern
         self.basename = basename
         self.queries = queries;
+
+        self.ingestion_thread_count = ingestion_thread_count
 
         self.min_thread_count = min_thread_count
         self.max_thread_count = max_thread_count
@@ -156,7 +159,6 @@ class Experiment:
 
         # We're currently restricted to a single shard,
         # so create an empty ShardDefinition file.
-        # TODO: reinstate following line.
         open(self.bf_shard_definition, "w").close()
 
         # Run statistics builder
@@ -178,6 +180,7 @@ class Experiment:
         # Create script file
         # TODO: reinstate following lines.
         with open(self.bf_repl_script, "w") as file:
+            file.write("threads {0}\n".format(self.ingestion_thread_count))
             file.write("load manifest {0}\n".format(self.manifest));
             file.write("status\n");
             file.write("compiler\n");
@@ -199,9 +202,8 @@ class Experiment:
         execute(args, self.bf_run_queries_log)
 
 
-
     def analyze_bf_index(self):
-        results = IndexCharacteristics("BitFunnel", self.thread_counts)
+        results = IndexCharacteristics("BitFunnel", self.ingestion_thread_count, self.thread_counts)
 
         with open(self.bf_run_queries_log, 'r') as myfile:
             run_queries_log = myfile.read()
@@ -237,7 +239,7 @@ class Experiment:
                 "{1} {2} {3}").format(self.classpath,
                                       self.lucene_index_path,
                                       self.manifest,
-                                      self.max_thread_count)
+                                      self.ingestion_thread_count, )
         print(args)
         execute(args, self.lucene_build_index_log)
 
@@ -256,7 +258,7 @@ class Experiment:
 
 
     def analyze_lucene_index(self):
-        results = IndexCharacteristics("Lucene", self.thread_counts)
+        results = IndexCharacteristics("Lucene", self.ingestion_thread_count, self.thread_counts)
         results.index_type = "Lucene"
 
         # Don't know how to determine bits per posting for Lucene.
@@ -321,7 +323,7 @@ class Experiment:
 
 
     def analyze_mg4j_index(self):
-        results = IndexCharacteristics("MG4J", self.thread_counts)
+        results = IndexCharacteristics("MG4J", self.ingestion_thread_count, self.thread_counts)
 
         # Compute bits/posting.
         with open(self.mg4j_run_queries_log[0], 'r') as myfile:
@@ -386,7 +388,7 @@ class Experiment:
 
 
     def analyze_pef_index(self):
-        results = IndexCharacteristics("PEF", self.thread_counts)
+        results = IndexCharacteristics("PEF", self.ingestion_thread_count, self.thread_counts)
 
         with open(self.pef_build_index_log, 'r') as myfile:
             build_index_log = myfile.read()
@@ -505,10 +507,10 @@ class Experiment:
 
         print(header.format("", bf.index_type, lucene.index_type, mg4j.index_type, pef.index_type))
         print(row_ints.format("Ingestion threads",
-                              1,
-                              lucene.thread_counts[thread],
-                              mg4j.thread_counts[thread],
-                              pef.thread_counts[thread]))
+                              bf.ingestion_thread_count,
+                              lucene.ingestion_thread_count,
+                              mg4j.ingestion_thread_count,
+                              pef.ingestion_thread_count))
         print(row.format("Ingestion time (s)",
                          bf.total_ingestion_time,
                          lucene.total_ingestion_time,
@@ -566,8 +568,9 @@ class Experiment:
 #
 ###########################################################################
 class IndexCharacteristics(object):
-    def __init__(self, index_type, thread_counts):
+    def __init__(self, index_type, ingestion_thread_count, thread_counts):
         self.index_type = index_type
+        self.ingestion_thread_count = ingestion_thread_count
         self.thread_counts = thread_counts
         self.bits_per_posting = math.nan
         self.total_ingestion_time = math.nan
@@ -593,6 +596,7 @@ class IndexCharacteristics(object):
     def print(self):
         print("Index type: {0}".format(self.index_type))
         print("Bits/posting: {0}".format(self.bits_per_posting))
+        print("Ingestion threads: {0}".format(self.ingestion_thread_count))
         print("Ingestion time: {0}".format(self.total_ingestion_time))
         print("False positive rate: {0}".format(self.false_positive_rate))
         print("False negative rate: {0}".format(self.false_negative_rate))
@@ -628,6 +632,7 @@ experiment_windows_273_150_100 = Experiment(
     r"D:\sigir\queries\06.efficiency_topics.all",
 
     # Min and max thread counts
+    8,
     7,
     8
 )
@@ -651,6 +656,7 @@ experiment_windows_273_1000_1500 = Experiment(
     r"D:\sigir\queries\06.efficiency_topics.all",
 
     # Min and max thread counts
+    8,
     1,
     8
 )
@@ -674,6 +680,7 @@ experiment_linux = Experiment(
     r"/home/mhop/git/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all",
 
     # Min and max thread counts
+    8,
     1,
     8
 )
@@ -697,6 +704,7 @@ experiment_dl_linux = Experiment(
     r"/home/danluu/Downloads/06.efficiency_topics.all",
 
     # Min and max thread counts
+    8,
     1,
     8
 )
