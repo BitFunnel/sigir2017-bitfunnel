@@ -162,9 +162,9 @@ class Experiment:
         open(self.bf_shard_definition, "w").close()
 
         # Run statistics builder
-        args = ("{0} statistics {1} {2}").format(self.bf_executable,
-                                             self.manifest,
-                                             self.bf_index_path)
+        args = ("{0} statistics {1} {2} -text").format(self.bf_executable,
+                                                       self.manifest,
+                                                       self.bf_index_path)
         execute(args, self.bf_build_statistics_log)
 
         # Run termtable builder
@@ -725,13 +725,12 @@ def runxxx(experiment):
     # Now we're ready to run queries.
 
     # BitFunnel
-    # experiment.build_bf_index()
-    experiment.run_bf_queries()
-    # experiment.compute_false_positive_rate()
+    experiment.build_bf_index()
+    # experiment.run_bf_queries()
 
     # Lucene
     # experiment.build_lucene_index()
-    experiment.run_lucene_queries()
+    # experiment.run_lucene_queries()
 
     # MG4J
     # experiment.run_mg4j_queries()
