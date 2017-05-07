@@ -220,7 +220,6 @@ class Experiment:
 
         self.compute_false_positive_rate(results);
 
-        results.print()
         return results
 
 
@@ -280,7 +279,6 @@ class Experiment:
         results.false_positive_rate = 0;
         results.false_negative_rate = 0;
 
-        results.print()
         return results
 
 
@@ -348,7 +346,6 @@ class Experiment:
         results.false_positive_rate = 0;
         results.false_negative_rate = 0;
 
-        results.print()
         return results
 
 
@@ -410,7 +407,6 @@ class Experiment:
         results.false_positive_rate = 0;
         results.false_negative_rate = 0;
 
-        results.print()
         return results
 
     ###########################################################################
@@ -443,8 +439,9 @@ class Experiment:
     #
     ###########################################################################
     def compute_false_positive_rate(self, results):
+        # TODO: Put this path in the constructor.
         bf = os.path.join(self.bf_index_path, "results-1\QueryPipelineStatistics.csv");
-        mg4j = self.mg4j_results_file
+        mg4j = self.mg4j_results_file[0]
 
         count = 0;
         total_matches = 0
@@ -494,6 +491,60 @@ class Experiment:
         # Terms
         # Postings
         pass
+
+
+    def summarize(self, thread):
+        bf = self.analyze_bf_index()
+        lucene = self.analyze_lucene_index()
+        mg4j = self.analyze_mg4j_index()
+        pef = self.analyze_pef_index()
+
+        header = "{:<25} {:>10} {:>10} {:>10} {:>10}"
+        row = "{:<25} {:>10.2f} {:>10.2f} {:>10.2f} {:>10.2f}"
+        row_ints = "{:<25} {:>10d} {:>10d} {:>10d} {:>10d}"
+
+        print(header.format("", bf.index_type, lucene.index_type, mg4j.index_type, pef.index_type))
+        print(row_ints.format("Ingestion threads",
+                              1,
+                              lucene.thread_counts[thread],
+                              mg4j.thread_counts[thread],
+                              pef.thread_counts[thread]))
+        print(row.format("Ingestion time (s)",
+                         bf.total_ingestion_time,
+                         lucene.total_ingestion_time,
+                         mg4j.total_ingestion_time,
+                         pef.total_ingestion_time))
+        print(row.format("Bits/posting",
+                         bf.bits_per_posting,
+                         lucene.bits_per_posting,
+                         mg4j.bits_per_posting,
+                         pef.bits_per_posting))
+        print(row.format("False positives (%)",
+                         bf.false_positive_rate * 100,
+                         lucene.false_positive_rate * 100,
+                         mg4j.false_positive_rate * 100,
+                         pef.false_positive_rate * 100))
+        print(row_ints.format("Query threads",
+                              bf.thread_counts[thread],
+                              lucene.thread_counts[thread],
+                              mg4j.thread_counts[thread],
+                              pef.thread_counts[thread]))
+        print(row.format("QPS",
+                         bf.qps[thread],
+                         lucene.qps[thread],
+                         mg4j.qps[thread],
+                         pef.qps[thread]))
+        print(row.format("Mean Latency (us)",
+                         bf.mean_query_latency[thread] * 1e6,
+                         lucene.mean_query_latency[thread] * 1e6,
+                         mg4j.mean_query_latency[thread] * 1e6,
+                         pef.mean_query_latency[thread] * 1e6))
+        print(row.format("Planning overhead (%)",
+                         bf.planning_overhead[thread] * 100,
+                         lucene.planning_overhead[thread] * 100,
+                         mg4j.planning_overhead[thread] * 100,
+                         pef.planning_overhead[thread] * 100))
+
 
     # Index type: BitFunnel
     # TODO: Thread count: 8 - also let user pick best thread count instead of using self.max_thread_count
@@ -687,6 +738,7 @@ def runxxx(experiment):
     # print()
     # experiment.analyze_lucene_index()
     # print()
-    experiment.analyze_pef_index()
+    # experiment.analyze_pef_index()
+    experiment.summarize(1)
 
 runxxx(experiment_windows_273_150_100)
