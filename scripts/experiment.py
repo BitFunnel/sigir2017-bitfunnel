@@ -2,6 +2,7 @@ import csv
 import itertools
 import math
 import os
+import platform
 import re
 from bf_utilities import run
 
@@ -735,7 +736,7 @@ def runxxx(experiment):
 
     # Lucene
     # experiment.build_lucene_index()
-    # experiment.run_lucene_queries()
+    experiment.run_lucene_queries()
 
     # MG4J
     experiment.run_mg4j_queries()
@@ -743,7 +744,7 @@ def runxxx(experiment):
     # PEF
     # experiment.build_pef_collection()
     # experiment.build_pef_index()
-    # experiment.run_pef_queries()
+    experiment.run_pef_queries()
 
     # Analyze logs to produce summary report.
     # experiment.analyze_bf_index()
