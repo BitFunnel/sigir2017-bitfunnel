@@ -65,7 +65,11 @@ class Experiment:
         self.manifest = os.path.join(self.root, self.basename + "-manifest.txt")
 
         # Java classpath for both mg4j and Lucene.
-        self.classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-shaded.jar")
+        # TODO: why does -shaded only show up on Windows? Can this be fixed in pom.xml or something?
+        if (platform.system() == 'Windows'):
+            self.classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT-shaded.jar")
+        else:
+            self.classpath = os.path.join(self.mg4j_repo, "target", "mg4j-1.0-SNAPSHOT.jar")
 
         self.thread_counts = range(self.min_thread_count, self.max_thread_count + 1)
 
@@ -695,12 +699,13 @@ experiment_dl_linux = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"/home/danluu/dev/what-is-this",
-    r"273-128-255",
+    # r"273-128-255",
+    r"273-2048-4095",
 
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
-    r"/home/danluu/dev/gov2",
-    r"GX000.*",  # Use all chunks
+    r"/home/danluu/dev/gov2/2048-4095",
+    r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
     r"/home/danluu/Downloads/06.efficiency_topics.all",
@@ -725,7 +730,7 @@ def runxxx(experiment):
     # Now we're ready to run queries.
 
     # BitFunnel
-    experiment.build_bf_index()
+    # experiment.build_bf_index()
     # experiment.run_bf_queries()
 
     # Lucene
@@ -733,7 +738,7 @@ def runxxx(experiment):
     # experiment.run_lucene_queries()
 
     # MG4J
-    # experiment.run_mg4j_queries()
+    experiment.run_mg4j_queries()
 
     # PEF
     # experiment.build_pef_collection()
@@ -748,6 +753,7 @@ def runxxx(experiment):
     # experiment.analyze_lucene_index()
     # print()
     # experiment.analyze_pef_index()
-    experiment.summarize(1)
+    # experiment.summarize(1)
 
-runxxx(experiment_windows_273_150_100)
+# runxxx(experiment_windows_273_150_100)
+runxxx(experiment_dl_linux)
