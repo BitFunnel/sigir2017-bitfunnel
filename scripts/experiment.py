@@ -230,6 +230,19 @@ class Experiment:
         return results
 
 
+    def analyze_bf_corpus(self, gov2_directories, min_terms_per_document, max_terms_per_document):
+        results = CorpusCharacteristics(gov2_directories, min_terms_per_document, max_terms_per_document)
+
+        with open(self.bf_build_statistics_log, 'r') as myfile:
+            build_statistics_log = myfile.read()
+            results.set_int_field("documents", "Document count:", build_statistics_log)
+            results.set_int_field("terms", "Raw DocumentFrequencyTable count:", build_statistics_log)
+            results.set_int_field("postings", "Posting count:", build_statistics_log)
+            results.set_int_field("bytes", "Total bytes read:", build_statistics_log)
+
+        return results
+
+
     ###########################################################################
     #
     # Lucene
@@ -297,7 +310,7 @@ class Experiment:
     def build_mg4j_index(self):
         args = ("java -cp {0} "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
-                "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence\({1}\) "
+                "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence({1}) "
                 "{2}").format(self.classpath, self.manifest, self.mg4j_basename)
         if not os.path.exists(self.mg4j_index_path):
             os.makedirs(self.mg4j_index_path)
@@ -317,7 +330,7 @@ class Experiment:
 
 
     def filter_query_log(self):
-        args = ("java -cp {0} "
+        args = ("java -Xmx16g -cp {0} "
                 "org.bitfunnel.reproducibility.IndexExporter "
                 "{1} {2} "
                 "--queries {3}").format(self.classpath,
@@ -461,9 +474,9 @@ class Experiment:
         false_negative_queries = 0
 
         with open(bf, newline='') as bf_results, open(mg4j, newline='') as mg4j_results:
-            # Discard header line from BitFunnel results.
-            # MG4J results don't currently include a header line.
+            # Discard header line.
             bf_results.readline()
+            mg4j_results.readline()
             bf_reader = csv.reader(bf_results, delimiter=',', quotechar='|')
             mg4j_reader = csv.reader(mg4j_results, delimiter=',', quotechar='|')
             for bfRow, mg4jRow in itertools.zip_longest(bf_reader, mg4j_reader):
@@ -555,18 +568,30 @@ class Experiment:
                          pef.planning_overhead[thread] * 100))
 
 
-    # Index type: BitFunnel
-    # TODO: Thread count: 8 - also let user pick best thread count instead of using self.max_thread_count
-    # Unique queries: 97113
-    # TODO: Queries processed: 97113
-    # Elapsed time: 5.06577
-    # Total parsing latency: 0.289529
-    # Total planning latency: 3.50474
-    # Total matching latency: 36.882
-    # Mean query latency: 0.000418855
-    # Planning overhead (%): 0.0932795
-    # QPS: 19170.4
+    def summarize_corpus(self, gov2_directories, min_terms_per_document, max_terms_per_document):
+        corpus = self.analyze_bf_corpus(gov2_directories,
+                                        min_terms_per_document,
+                                        max_terms_per_document)
 
+        header = "{:<25} {:>15}"
+        row_floats = "{:<25} {:>15.2f}"
+        row_ints = "{:<25} {:>15,d}"
+
+        print(header.format("", "A"))
+        print(row_ints.format("Gov2 directories",
+                              corpus.gov2_directors))
+        print(row_ints.format("Min terms/document",
+                              corpus.min_terms_per_document))
+        print(row_ints.format("Max terms/document",
+                              corpus.max_terms_per_document))
+        print(row_ints.format("Documents",
+                              corpus.documents))
+        print(row_ints.format("Total terms",
+                              corpus.terms))
+        print(row_ints.format("Total postings",
+                              corpus.postings))
+        print(row_floats.format("Plain text input (GB)",
+                                corpus.bytes / 1e9))
 
 
 ###########################################################################
@@ -614,6 +639,42 @@ class IndexCharacteristics(object):
             print("  Planning overhead: {0}".format(self.planning_overhead[i]))
 
 
+###########################################################################
+#
+# CorpusCharacteristics
+#
+# Gov2 Directories 273 273
+# Min terms/document 100 1000
+# Max terms/document 150 1500
+# Documents 3,870,096 361,334
+# Total terms 3,833,739 6,776,178
+# Total postings 469,089,996 437,723,336
+# Plain text input (GB) 6.01 13.3
+#
+###########################################################################
+class CorpusCharacteristics(object):
+    def __init__(self, gov2_directories, min_terms_per_document, max_terms_per_document):
+        self.gov2_directors = gov2_directories
+        self.min_terms_per_document = min_terms_per_document
+        self.max_terms_per_document = max_terms_per_document
+        self.documents = math.nan
+        self.terms = math.nan
+        self.postings = math.nan
+        self.bytes = math.nan
+
+    def set_int_field(self, property, text, log_data):
+        value = int(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
+        setattr(self, property, value)
+
+    def print(self):
+        print("Gov2 directories: {0}".format(self.index_type))
+        print("Min terms/document: {0}".format(self.bits_per_posting))
+        print("Max terms/document: {0}".format(self.ingestion_thread_count))
+        print("Documents: {0}".format(self.total_ingestion_time))
+        print("Terms: {0}".format(self.false_positive_rate))
+        print("Postings: {0}".format(self.false_negative_rate))
+        print("Plain text input (GB): {0}".format(self.false_negative_rate))
+
 
 ###########################################################################
 #
@@ -641,6 +702,30 @@ experiment_windows_273_150_100 = Experiment(
     # Min and max thread counts
     8,
     7,
+    8
+)
+
+experiment_windows_273_128_255 = Experiment(
+    # Paths to tools
+    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+    r"D:\git\mg4j-workbench",
+    r"/home/mhop/git/partitioned_elias_fano/bin",
+
+    # The directory containing all indexes and the basename for this index
+    r"D:\temp\indexes",
+    r"273_128_255",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"d:\sigir\chunks-128-255",
+    r"GX.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
+    r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # Min and max thread counts
+    8,
+    1,
     8
 )
 
@@ -721,40 +806,36 @@ experiment_dl_linux = Experiment(
 def runxxx(experiment):
     # experiment.fix_query_log()
     # experiment.build_chunk_manifest()
-
-    # Must build the mg4j index before filtering the query log
+    #
+    # # Must build the mg4j index before filtering the query log
     # experiment.build_mg4j_index()
-
-    # Must filter the query log before running any queries.
+    #
+    # # Must filter the query log before running any queries.
     # experiment.filter_query_log()
-
-    # Now we're ready to run queries.
-
-    # BitFunnel
+    #
+    # # Now we're ready to run queries.
+    #
+    # # BitFunnel
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
-
-    # Lucene
+    #
+    # # Lucene
     # experiment.build_lucene_index()
-    experiment.run_lucene_queries()
-
-    # MG4J
-    experiment.run_mg4j_queries()
-
-    # PEF
+    # experiment.run_lucene_queries()
+    #
+    # # MG4J
+    # experiment.run_mg4j_queries()
+    #
+    # # PEF
     # experiment.build_pef_collection()
     # experiment.build_pef_index()
-    experiment.run_pef_queries()
-
-    # Analyze logs to produce summary report.
-    # experiment.analyze_bf_index()
-    # print()
-    # experiment.analyze_mg4j_index()
-    # print()
-    # experiment.analyze_lucene_index()
-    # print()
-    # experiment.analyze_pef_index()
+    # # experiment.run_pef_queries()
+    #
     # experiment.summarize(1)
 
+    experiment.analyze_bf_index().print()
+    experiment.analyze_mg4j_index().print()
+    experiment.summarize_corpus(273, 128, 255)
+
+runxxx(experiment_windows_273_128_255)
 # runxxx(experiment_windows_273_150_100)
-runxxx(experiment_dl_linux)
