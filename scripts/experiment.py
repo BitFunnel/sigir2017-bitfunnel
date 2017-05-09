@@ -801,8 +801,8 @@ experiment_dl_linux = Experiment(
 
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
-    r"/home/danluu/dev/gov2/",
-    r"GX000.*",  # Use all chunks
+    r"/home/danluu/dev/gov2-2048-4095/chunks",
+    r"GX000.*",
 
     # The query log to be used for this experiment.
     r"/home/danluu/Downloads/06.efficiency_topics.all",
@@ -815,8 +815,8 @@ experiment_dl_linux = Experiment(
 
 
 def runxxx(experiment):
-    # experiment.fix_query_log()
-    # experiment.build_chunk_manifest()
+    experiment.fix_query_log()
+    experiment.build_chunk_manifest()
 
     # Must build the mg4j index before filtering the query log
     experiment.build_mg4j_index()
