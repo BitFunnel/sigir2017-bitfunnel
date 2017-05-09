@@ -626,14 +626,18 @@ class IndexCharacteristics(object):
 
 
     def set_float_field(self, property, text, log_data):
-        value = float(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
-        setattr(self, property, value)
+        result = re.findall("{0} (\d+\.?\d+)".format(text), log_data)
+        if (len(result) > 0):
+            value = float(result[0])
+            setattr(self, property, value)
 
 
     def append_float_field(self, property, text, log_data):
-        value = float(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
-        value_list = getattr(self, property)
-        value_list.append(value)
+        result = re.findall("{0} (\d+\.?\d+)".format(text), log_data)
+        if (len(result) > 0):
+            value = float(result[0])
+            value_list = getattr(self, property)
+            value_list.append(value)
 
 
     def print(self):
@@ -815,32 +819,32 @@ experiment_dl_linux = Experiment(
 
 
 def runxxx(experiment):
-    experiment.fix_query_log()
-    experiment.build_chunk_manifest()
-
-    # Must build the mg4j index before filtering the query log
-    experiment.build_mg4j_index()
-
-    # Must filter the query log before running any queries.
-    experiment.filter_query_log()
-
-    # Now we're ready to run queries.
-
-    # BitFunnel
-    experiment.build_bf_index()
-    experiment.run_bf_queries()
-
-    # Lucene
-    # experiment.build_lucene_index()
-    experiment.run_lucene_queries()
-
-    # MG4J
-    experiment.run_mg4j_queries()
-
-    # PEF
-    experiment.build_pef_collection()
-    experiment.build_pef_index()
-    # experiment.run_pef_queries()
+    # experiment.fix_query_log()
+    # experiment.build_chunk_manifest()
+    #
+    # # Must build the mg4j index before filtering the query log
+    # experiment.build_mg4j_index()
+    #
+    # # Must filter the query log before running any queries.
+    # experiment.filter_query_log()
+    #
+    # # Now we're ready to run queries.
+    #
+    # # BitFunnel
+    # experiment.build_bf_index()
+    # experiment.run_bf_queries()
+    #
+    # # Lucene
+    # # experiment.build_lucene_index()
+    # experiment.run_lucene_queries()
+    #
+    # # MG4J
+    # experiment.run_mg4j_queries()
+    #
+    # # PEF
+    # experiment.build_pef_collection()
+    # experiment.build_pef_index()
+    experiment.run_pef_queries()
 
     experiment.summarize(7)
     print()
