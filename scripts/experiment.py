@@ -634,6 +634,8 @@ class IndexCharacteristics(object):
         if (len(result) > 0):
             value = float(result[0])
             setattr(self, property, value)
+        else:
+            print("ERROR: failed to extract", text, log_data)
 
 
     def append_float_field(self, property, text, log_data):
@@ -642,6 +644,8 @@ class IndexCharacteristics(object):
             value = float(result[0])
             value_list = getattr(self, property)
             value_list.append(value)
+        else:
+            print("ERROR: failed to extract", text, log_data)
 
 
     def print(self):
