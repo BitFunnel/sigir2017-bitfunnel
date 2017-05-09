@@ -308,9 +308,15 @@ class Experiment:
     #
     ###########################################################################
     def build_mg4j_index(self):
-        args = ("java -cp {0} "
+        if (platform.system() == 'Windows'):
+            args = ("java -cp {0} "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
                 "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence({1}) "
+                "{2}").format(self.classpath, self.manifest, self.mg4j_basename)
+        else:
+            args = ("java -cp {0} "
+                "it.unimi.di.big.mg4j.tool.IndexBuilder "
+                "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence\({1}\) "
                 "{2}").format(self.classpath, self.manifest, self.mg4j_basename)
         if not os.path.exists(self.mg4j_index_path):
             os.makedirs(self.mg4j_index_path)
@@ -771,7 +777,7 @@ experiment_linux = Experiment(
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
     r"/mnt/d/sigir/chunks-100-150",
-    r"GX.*",  # Use all chunks
+    r"GX000.*",  # Use all chunks
 
     # The query log to be used for this experiment.
     r"/home/mhop/git/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all",
@@ -795,8 +801,8 @@ experiment_dl_linux = Experiment(
 
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
-    r"/home/danluu/dev/gov2/2048-4095",
-    r"GX.*",  # Use all chunks
+    r"/home/danluu/dev/gov2/",
+    r"GX000.*",  # Use all chunks
 
     # The query log to be used for this experiment.
     r"/home/danluu/Downloads/06.efficiency_topics.all",
@@ -811,37 +817,37 @@ experiment_dl_linux = Experiment(
 def runxxx(experiment):
     # experiment.fix_query_log()
     # experiment.build_chunk_manifest()
-    #
-    # # Must build the mg4j index before filtering the query log
-    # experiment.build_mg4j_index()
-    #
-    # # Must filter the query log before running any queries.
-    # experiment.filter_query_log()
-    #
-    # # Now we're ready to run queries.
-    #
-    # # BitFunnel
-    # experiment.build_bf_index()
-    # experiment.run_bf_queries()
-    #
-    # # Lucene
+
+    # Must build the mg4j index before filtering the query log
+    experiment.build_mg4j_index()
+
+    # Must filter the query log before running any queries.
+    experiment.filter_query_log()
+
+    # Now we're ready to run queries.
+
+    # BitFunnel
+    experiment.build_bf_index()
+    experiment.run_bf_queries()
+
+    # Lucene
     # experiment.build_lucene_index()
-    # experiment.run_lucene_queries()
-    #
-    # # MG4J
-    # experiment.run_mg4j_queries()
-    #
-    # # PEF
-    # experiment.build_pef_collection()
-    # experiment.build_pef_index()
-    # # experiment.run_pef_queries()
-    #
+    experiment.run_lucene_queries()
+
+    # MG4J
+    experiment.run_mg4j_queries()
+
+    # PEF
+    experiment.build_pef_collection()
+    experiment.build_pef_index()
+    # experiment.run_pef_queries()
+
     experiment.summarize(7)
     print()
 
-    # experiment.analyze_bf_index().print()
-    # experiment.analyze_mg4j_index().print()
-    experiment.summarize_corpus(273, 128, 255)
+    experiment.analyze_bf_index().print()
+    experiment.analyze_mg4j_index().print()
+    experiment.summarize_corpus(273, 2048, 4095)
 
-runxxx(experiment_windows_273_128_255)
+runxxx(experiment_dl_linux)
 # runxxx(experiment_windows_273_150_100)
