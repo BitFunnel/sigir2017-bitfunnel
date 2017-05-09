@@ -468,7 +468,11 @@ class Experiment:
     ###########################################################################
     def compute_false_positive_rate(self, results):
         # TODO: Put this path in the constructor.
-        bf = os.path.join(self.bf_index_path, "results-1\QueryPipelineStatistics.csv");
+        # TODO: why is this results-1 and not all results?
+        if (platform.system() == 'Windows'):
+            bf = os.path.join(self.bf_index_path, "results-1\QueryPipelineStatistics.csv");
+        else:
+            bf = os.path.join(self.bf_index_path, "results-1/QueryPipelineStatistics.csv");
         mg4j = self.mg4j_results_file[0]
 
         count = 0;
@@ -844,7 +848,7 @@ def runxxx(experiment):
     # # PEF
     # experiment.build_pef_collection()
     # experiment.build_pef_index()
-    experiment.run_pef_queries()
+    # experiment.run_pef_queries()
 
     experiment.summarize(7)
     print()
