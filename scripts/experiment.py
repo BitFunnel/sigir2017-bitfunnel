@@ -378,7 +378,7 @@ class Experiment:
         if not os.path.exists(self.pef_index_path):
             os.makedirs(self.pef_index_path)
 
-        args = ("java -cp {0} "
+        args = ("java -cp {0} -Xmx16g "
                 "org.bitfunnel.reproducibility.IndexExporter "
                 "{1} {2} --index").format(self.classpath, self.mg4j_basename, self.pef_basename);
         execute(args, self.pef_build_collection_log)
@@ -521,51 +521,56 @@ class Experiment:
         mg4j = self.analyze_mg4j_index()
         pef = self.analyze_pef_index()
 
-        header = "{:<25} {:>10} {:>10} {:>10} {:>10}"
-        row = "{:<25} {:>10.2f} {:>10.2f} {:>10.2f} {:>10.2f}"
-        row_ints = "{:<25} {:>10d} {:>10d} {:>10d} {:>10d}"
+        header = r"{:<25} & {:>10} & {:>10} & {:>10} & {:>10} \\"
+        row = r"{:<25} & {:>10,.2f} & {:>10,.2f} & {:>10,.2f} & {:>10,.2f} \\"
+        row_ints = r"{:<25} & {:>10,d} & {:>10,d} & {:>10,d} & {:>10,d} \\"
 
-        print(header.format("", bf.index_type, lucene.index_type, mg4j.index_type, pef.index_type))
-        print(row_ints.format("Ingestion threads",
-                              bf.ingestion_thread_count,
-                              lucene.ingestion_thread_count,
-                              mg4j.ingestion_thread_count,
-                              pef.ingestion_thread_count))
-        print(row.format("Ingestion time (s)",
-                         bf.total_ingestion_time,
-                         lucene.total_ingestion_time,
-                         mg4j.total_ingestion_time,
-                         pef.total_ingestion_time))
-        print(row.format("Bits/posting",
-                         bf.bits_per_posting,
-                         lucene.bits_per_posting,
-                         mg4j.bits_per_posting,
-                         pef.bits_per_posting))
-        print(row.format("False positives (%)",
-                         bf.false_positive_rate * 100,
-                         lucene.false_positive_rate * 100,
-                         mg4j.false_positive_rate * 100,
-                         pef.false_positive_rate * 100))
-        print(row_ints.format("Query threads",
-                              bf.thread_counts[thread],
-                              lucene.thread_counts[thread],
-                              mg4j.thread_counts[thread],
-                              pef.thread_counts[thread]))
-        print(row.format("QPS",
+        print(header.format("", bf.index_type, pef.index_type, mg4j.index_type, lucene.index_type))
+        # print(row_ints.format("Ingestion threads",
+        #                       bf.ingestion_thread_count,
+        #                       pef.ingestion_thread_count,
+        #                       mg4j.ingestion_thread_count,
+        #                       lucene.ingestion_thread_count))
+        # print(row.format("Ingestion time (s)",
+        #                  bf.total_ingestion_time,
+        #                  pef.total_ingestion_time,
+        #                  mg4j.total_ingestion_time,
+        #                  lucene.total_ingestion_time))
+        # print(row_ints.format("Query threads",
+        #                       bf.thread_counts[thread],
+        #                       pef.thread_counts[thread],
+        #                       mg4j.thread_counts[thread],
+        #                       lucene.thread_counts[thread]))
+        print(row.format("QPS ({} threads)".format(bf.thread_counts[thread]),
                          bf.qps[thread],
-                         lucene.qps[thread],
+                         pef.qps[thread],
                          mg4j.qps[thread],
-                         pef.qps[thread]))
+                         lucene.qps[thread]))
         print(row.format("Mean Latency (us)",
                          bf.mean_query_latency[thread] * 1e6,
-                         lucene.mean_query_latency[thread] * 1e6,
+                         pef.mean_query_latency[thread] * 1e6,
                          mg4j.mean_query_latency[thread] * 1e6,
-                         pef.mean_query_latency[thread] * 1e6))
-        print(row.format("Planning overhead (%)",
+                         lucene.mean_query_latency[thread] * 1e6))
+        print(row.format(r"Planning overhead (\%)",
                          bf.planning_overhead[thread] * 100,
-                         lucene.planning_overhead[thread] * 100,
+                         pef.planning_overhead[thread] * 100,
                          mg4j.planning_overhead[thread] * 100,
-                         pef.planning_overhead[thread] * 100))
+                         lucene.planning_overhead[thread] * 100))
+        print(row.format(r"False positives (\%)",
+                         bf.false_positive_rate * 100,
+                         pef.false_positive_rate * 100,
+                         mg4j.false_positive_rate * 100,
+                         lucene.false_positive_rate * 100))
+        print(row.format("Bits/posting",
+                         bf.bits_per_posting,
+                         pef.bits_per_posting,
+                         mg4j.bits_per_posting,
+                         lucene.bits_per_posting))
+        print(row.format("DQ",
+                         bf.qps[thread] / bf.bits_per_posting,
+                         pef.qps[thread] / pef.bits_per_posting,
+                         mg4j.qps[thread] / mg4j.bits_per_posting,
+                         math.nan))
 
 
     def summarize_corpus(self, gov2_directories, min_terms_per_document, max_terms_per_document):
@@ -701,7 +706,7 @@ experiment_windows_273_150_100 = Experiment(
 
     # Min and max thread counts
     8,
-    7,
+    1,
     8
 )
 
@@ -831,10 +836,11 @@ def runxxx(experiment):
     # experiment.build_pef_index()
     # # experiment.run_pef_queries()
     #
-    # experiment.summarize(1)
+    experiment.summarize(7)
+    print()
 
-    experiment.analyze_bf_index().print()
-    experiment.analyze_mg4j_index().print()
+    # experiment.analyze_bf_index().print()
+    # experiment.analyze_mg4j_index().print()
     experiment.summarize_corpus(273, 128, 255)
 
 runxxx(experiment_windows_273_128_255)
