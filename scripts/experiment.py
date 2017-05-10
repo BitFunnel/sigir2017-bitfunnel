@@ -5,6 +5,7 @@ import os
 import platform
 import re
 from bf_utilities import run
+from latex import latex_corpora
 
 
 def execute(command, log_file = None):
@@ -437,6 +438,7 @@ class Experiment:
 
         return results
 
+
     ###########################################################################
     #
     # Chunk manifests
@@ -534,6 +536,10 @@ class Experiment:
         header = r"{:<25} & {:>10} & {:>10} & {:>10} & {:>10} \\"
         row = r"{:<25} & {:>10,.2f} & {:>10,.2f} & {:>10,.2f} & {:>10,.2f} \\"
         row_ints = r"{:<25} & {:>10,d} & {:>10,d} & {:>10,d} & {:>10,d} \\"
+
+        first_column_width = 25
+        def row_format(field_format):
+            return r"{{:<{1}}} & {{{0}}} & {{{0}}} & {{{0}}} & {{{0}}} \\".format(field_format, first_column_width)
 
         print(header.format("", bf.index_type, pef.index_type, mg4j.index_type, lucene.index_type))
         # print(row_ints.format("Ingestion threads",
@@ -689,15 +695,6 @@ class CorpusCharacteristics(object):
         value = int(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
         setattr(self, property, value)
 
-    def print(self):
-        print("Gov2 directories: {0}".format(self.index_type))
-        print("Min terms/document: {0}".format(self.bits_per_posting))
-        print("Max terms/document: {0}".format(self.ingestion_thread_count))
-        print("Documents: {0}".format(self.total_ingestion_time))
-        print("Terms: {0}".format(self.false_positive_rate))
-        print("Postings: {0}".format(self.false_negative_rate))
-        print("Plain text input (GB): {0}".format(self.false_negative_rate))
-
 
 ###########################################################################
 #
@@ -776,6 +773,56 @@ experiment_windows_273_1000_1500 = Experiment(
     8
 )
 
+experiment_windows_273_1024_2047 = Experiment(
+    # Paths to tools
+    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+    r"D:\git\mg4j-workbench",
+    r"/home/mhop/git/partitioned_elias_fano/bin",
+
+    # The directory containing all indexes and the basename for this index
+    r"D:\temp\indexes",
+    r"273-1024-2047",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"d:\sigir\chunks-1024-2047",
+    r"GX.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
+    r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # Min and max thread counts
+    8,
+    1,
+    8
+)
+
+
+experiment_linux_273_1024_2047 = Experiment(
+    # Paths to tools
+    r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
+    r"/home/mhop/git/mg4j-workbench",
+    r"/home/mhop/git/partitioned_elias_fano/bin",
+
+    # The directory containing all indexes and the basename for this index
+    r"/mnt/d/temp/indexes",
+    r"273-1024-2047",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"/mnt/d/sigir/chunks-100-150",
+    r"GX.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
+    r"/home/mhop/git/mg4j-workbench/data/trec-terabyte/06.efficiency_topics.all",
+
+    # Min and max thread counts
+    8,
+    1,
+    8
+)
+
+
 experiment_linux = Experiment(
     # Paths to tools
     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
@@ -841,14 +888,14 @@ def runxxx(experiment):
     # # BitFunnel
     # experiment.build_bf_index()
     # experiment.run_bf_queries()
-    #
+    # #
     # # Lucene
     # # experiment.build_lucene_index()
     # experiment.run_lucene_queries()
-    #
+    # #
     # # MG4J
     # experiment.run_mg4j_queries()
-    #
+    # #
     # # PEF
     # experiment.build_pef_collection()
     # experiment.build_pef_index()
@@ -862,4 +909,12 @@ def runxxx(experiment):
     experiment.summarize_corpus(273, 2048, 4095)
 
 runxxx(experiment_dl_linux)
+# runxxx(experiment_windows_273_128_255)
 # runxxx(experiment_windows_273_150_100)
+# runxxx(experiment_windows_273_1000_1500)
+# runxxx(experiment_windows_273_1024_2047)
+# runxxx(experiment_linux_273_1024_2047)
+# latex_corpora([
+#     experiment_windows_273_150_100.analyze_bf_corpus(273, 100, 150),
+#     experiment_windows_273_128_255.analyze_bf_corpus(273, 128, 255),
+#     experiment_windows_273_1024_2047.analyze_bf_corpus(273, 1024, 2047)])
