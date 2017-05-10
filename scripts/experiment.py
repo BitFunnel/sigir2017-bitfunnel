@@ -672,14 +672,6 @@ class IndexCharacteristics(object):
 #
 # CorpusCharacteristics
 #
-# Gov2 Directories 273 273
-# Min terms/document 100 1000
-# Max terms/document 150 1500
-# Documents 3,870,096 361,334
-# Total terms 3,833,739 6,776,178
-# Total postings 469,089,996 437,723,336
-# Plain text input (GB) 6.01 13.3
-#
 ###########################################################################
 class CorpusCharacteristics(object):
     def __init__(self, gov2_directories, min_terms_per_document, max_terms_per_document):
@@ -694,32 +686,3 @@ class CorpusCharacteristics(object):
     def set_int_field(self, property, text, log_data):
         value = int(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
         setattr(self, property, value)
-
-
-def runxxx(experiment):
-    # experiment.fix_query_log()
-    # experiment.build_chunk_manifest()
-    #
-    # # Must build the mg4j index before filtering the query log
-    # # Must also build mg4j before building PEF which takes the MG4J export
-    # # as input.
-    # experiment.build_mg4j_index()
-    #
-    # # Build the other indexes at this point
-    # experiment.build_bf_index()
-    # experiment.build_lucene_index()
-    # experiment.build_pef_collection()
-    # experiment.build_pef_index()
-    #
-    # # Must filter the query log before running any queries.
-    # experiment.filter_query_log()
-    #
-    # # Now we're ready to run queries.
-    #
-    # experiment.run_bf_queries()
-    # experiment.run_lucene_queries()
-    # experiment.run_mg4j_queries()
-    # experiment.run_pef_queries()
-
-    experiment.summarize(7)
-    print()
