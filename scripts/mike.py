@@ -1,4 +1,6 @@
+from build_filtered_chunks import process_chunk_list
 from experiment import Experiment
+
 
 ###########################################################################
 #
@@ -179,6 +181,42 @@ def runxxx(experiment):
 
     experiment.summarize(7)
     print()
+
+
+process_chunk_list(r"d:\data\gov2",
+                   r"d:\temp\chunks",
+                   r"D:\git\mg4j-workbench",
+                   r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+                   64,
+                   127,
+                   8)
+
+
+# process_chunk_list(r"d:\data\gov2",
+#                    r"d:\temp\chunks",
+#                    r"D:\git\mg4j-workbench",
+#                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+#                    2048,
+#                    4095,
+#                    7)
+
+
+# process_chunk_list(r"d:\data\gov2",
+#                    r"d:\temp\chunks",
+#                    r"D:\git\mg4j-workbench",
+#                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+#                    1024,
+#                    2047,
+#                    7)
+
+
+# process_chunk_list(r"/home/danluu/dev/gov2",
+#                    r"/home/danluu/dev/what-is-this",
+#                    r"/home/danluu/dev/mg4j-workbench",
+#                    r"/home/danluu/dev/BitFunnel/build-ninja/tools/BitFunnel/src/BitFunnel",
+#                    128,
+#                    255,
+#                    7)
 
 # runxxx(experiment_windows_273_128_255)
 # runxxx(experiment_windows_273_150_100)
