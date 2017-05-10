@@ -5,7 +5,6 @@ import os
 import platform
 import re
 from bf_utilities import run
-from latex import latex_corpora
 
 
 def execute(command, log_file = None):
