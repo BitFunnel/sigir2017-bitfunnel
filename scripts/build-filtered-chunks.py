@@ -192,9 +192,18 @@ process_chunk_list(r"d:\data\gov2",
                    r"d:\temp\chunks",
                    r"D:\git\mg4j-workbench",
                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-                   2048,
-                   4095,
-                   7)
+                   64,
+                   127,
+                   8)
+
+
+# process_chunk_list(r"d:\data\gov2",
+#                    r"d:\temp\chunks",
+#                    r"D:\git\mg4j-workbench",
+#                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+#                    2048,
+#                    4095,
+#                    7)
 
 
 # process_chunk_list(r"d:\data\gov2",
