@@ -81,7 +81,7 @@ def analyze_innovations(experiment, labels, treatments, densities):
 
 
 def innovations(experiment, labels, treatments, densities):
-    # measure_innovations(experiment, treatments, densities)
+    measure_innovations(experiment, treatments, densities)
     analyze_innovations(experiment, labels, treatments, densities)
 
 
@@ -109,6 +109,33 @@ experiment_windows_273_1024_2047 = Experiment(
     8
 )
 
+
+experiment_linux_273_1024_2047 = Experiment(
+    # Paths to tools
+    r"/home/danluu/dev/BitFunnel/build-ninja/tools/BitFunnel/src/BitFunnel",
+    r"/home/danluu/dev/mg4j-workbench",
+    r"/home/danluu/dev/partitioned_elias_fano/bin",
+
+    # The directory containing all indexes and the basename for this index
+    r"/home/danluu/dev/what-is-this",
+    # r"273-128-255",
+    r"273-2048-4095",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"/home/danluu/dev/gov2-2048-4095/chunks",
+    r"GX.*",
+
+    # The query log to be used for this experiment.
+    r"/home/danluu/Downloads/06.efficiency_topics.all",
+
+    # Min and max thread counts
+    8,
+    1,
+    8
+)
+
+
 # labels =["BSS", "BSS-FC", "BTFNL"]
 # treatments = ["PrivateRank0", "PrivateSharedRank0", "Optimal"]
 
@@ -122,3 +149,4 @@ densities = [0.05, 0.10, 0.15, 0.20, 0.25]
 
 
 innovations(experiment_windows_273_1024_2047, labels, treatments, densities)
+# innovations(experiment_linux_273_1024_2047, labels, treatments, densities)
