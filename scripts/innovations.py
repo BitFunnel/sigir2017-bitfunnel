@@ -2,6 +2,7 @@ from bf_utilities import run
 from experiment import Experiment
 import os
 import re
+import sys
 
 
 def measure_innovations(experiment, treatments, densities):
@@ -72,7 +73,13 @@ def analyze_innovations(experiment, labels, treatments, densities):
             with open(repl_log, 'r') as myfile:
                 run_queries_log = myfile.read()
                 bpp = float(re.findall("Bits per posting: (\d+\.?\d+)", run_queries_log)[0])
-                qps = float(re.findall("QPS: (\d+\.?\d+)", run_queries_log)[0])
+                qps_results = re.findall("QPS: (\d+\.?\d+)", run_queries_log)
+                qps = float('nan')
+                if len(qps_results) == 1:
+                    qps = float(qps_results[0])
+                else:
+                    print("ERROR: failed to find QPS from", run_queries_log)
+                    sys.exit()
                 print(r"        {:<10} & {:>10.2f} & {:>10.1f} & {:>10,.1f} & {:>10,.0f} \\".format(
                     labels[i], density, bpp, qps / 1000.0, qps / bpp))
         print(r"        \hline")
@@ -81,7 +88,7 @@ def analyze_innovations(experiment, labels, treatments, densities):
 
 
 def innovations(experiment, labels, treatments, densities):
-    measure_innovations(experiment, treatments, densities)
+    # measure_innovations(experiment, treatments, densities)
     analyze_innovations(experiment, labels, treatments, densities)
 
 
@@ -148,5 +155,5 @@ densities = [0.05, 0.10, 0.15, 0.20, 0.25]
 # densities = [0.05]
 
 
-innovations(experiment_windows_273_1024_2047, labels, treatments, densities)
-# innovations(experiment_linux_273_1024_2047, labels, treatments, densities)
+# innovations(experiment_windows_273_1024_2047, labels, treatments, densities)
+innovations(experiment_linux_273_1024_2047, labels, treatments, densities)
