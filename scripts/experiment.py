@@ -309,7 +309,7 @@ class Experiment:
     ###########################################################################
     def build_mg4j_index(self):
         if (platform.system() == 'Windows'):
-            args = ("java -cp {0} "
+            args = ("java -cp {0} -Xmx50g -Dfile.encoding=UTF-8 "
                 "it.unimi.di.big.mg4j.tool.IndexBuilder "
                 "-o org.bitfunnel.reproducibility.ChunkManifestDocumentSequence({1}) "
                 "{2}").format(self.classpath, self.manifest, self.mg4j_basename)
@@ -633,7 +633,7 @@ class IndexCharacteristics(object):
 
 
     def set_float_field(self, property, text, log_data):
-        result = re.findall("{0} (\d+\.?\d+)".format(text), log_data)
+        result = re.findall("{0} (\d+\.?\d+(?:e[+-]?\d+)?)".format(text), log_data)
         if (len(result) > 0):
             value = float(result[0])
             setattr(self, property, value)
@@ -642,7 +642,7 @@ class IndexCharacteristics(object):
 
 
     def append_float_field(self, property, text, log_data):
-        result = re.findall("{0} (\d+\.?\d+)".format(text), log_data)
+        result = re.findall("{0} (\d+\.?\d+(?:e[+-]?\d+)?)".format(text), log_data)
         if (len(result) > 0):
             value = float(result[0])
             value_list = getattr(self, property)
