@@ -223,6 +223,8 @@ class Experiment:
                 data = myfile.read()
                 results.append_float_field("planning_overhead", r"Planning overhead:", data)
                 results.append_float_field("qps", "QPS:", data)
+                results.append_float_field("mps", "MPS:", data)
+                results.append_float_field("mpq", "MPQ:", data)
                 results.append_float_field("mean_query_latency", "Mean query latency:", data)
 
         self.compute_false_positive_rate(results);
@@ -292,6 +294,8 @@ class Experiment:
             with open(run_queries_log, 'r') as myfile:
                 data = myfile.read()
                 results.append_float_field("qps", "QPS:", data)
+                results.append_float_field("mps", "MPS:", data)
+                results.append_float_field("mpq", "MPQ:", data)
                 results.append_float_field("mean_query_latency", "Mean query latency:", data)
                 results.append_float_field("planning_overhead", r"Planning overhead:", data)
 
@@ -365,6 +369,8 @@ class Experiment:
             with open(run_queries_log, 'r') as myfile:
                 data = myfile.read()
             results.append_float_field("qps", "QPS:", data)
+            results.append_float_field("mps", "MPS:", data)
+            results.append_float_field("mpq", "MPQ:", data)
             results.append_float_field("mean_query_latency", "Mean query latency:", data)
             results.planning_overhead.append(math.nan)
 
@@ -426,6 +432,8 @@ class Experiment:
             with open(query_summary_statistics, 'r') as myfile:
                 data = myfile.read()
                 results.append_float_field("qps", "QPS:", data)
+                results.append_float_field("mps", "MPS:", data)
+                results.append_float_field("mpq", "MPQ:", data)
                 results.append_float_field("mean_query_latency", "Mean query latency:", data)
 
                 # PEF does no parsing and planning.
@@ -559,6 +567,16 @@ class Experiment:
                          pef.qps[thread],
                          mg4j.qps[thread],
                          lucene.qps[thread]))
+        print(row.format("MPS ({} threads) (M)".format(bf.thread_counts[thread]),
+                         bf.mps[thread] / 1e6,
+                         pef.mps[thread] / 1e6,
+                         mg4j.mps[thread] / 1e6,
+                         lucene.mps[thread] / 1e6))
+        print(row.format("MPQ",
+                         bf.mpq[thread],
+                         pef.mpq[thread],
+                         mg4j.mpq[thread],
+                         lucene.mpq[thread]))
         print(row.format("Mean Latency (us)",
                          bf.mean_query_latency[thread] * 1e6,
                          pef.mean_query_latency[thread] * 1e6,
@@ -627,6 +645,8 @@ class IndexCharacteristics(object):
         self.false_positive_rate = math.nan
         self.false_negative_rate = math.nan
         self.qps = []
+        self.mps = []
+        self.mpq = []
         self.mean_query_latency = []
         self.planning_overhead = []
 
@@ -661,6 +681,8 @@ class IndexCharacteristics(object):
         for i, threads in enumerate(self.thread_counts):
             print("{0} query threads:".format(threads))
             print("  QPS: {0}".format(self.qps[i]))
+            print("  MPS: {0}".format(self.mps[i]))
+            print("  MPQ: {0}".format(self.mpq[i]))
             print("  Mean query latency: {0}".format(self.mean_query_latency[i]))
             print("  Planning overhead: {0}".format(self.planning_overhead[i]))
 
