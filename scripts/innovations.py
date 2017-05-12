@@ -148,7 +148,8 @@ experiment_linux_273_1024_2047 = Experiment(
 
 labels =["BSS", "BSS-FC", "BTFNL"]
 treatments = ["ClassicBitsliced", "PrivateSharedRank0", "Optimal"]
-densities = [0.05, 0.10, 0.15, 0.20, 0.25]
+densities = [0.05, 0.10, 0.15, 0.20, 0.25, 0.3, 0.35]
+# densities = [0.35]
 
 # labels =["BSS"]
 # treatments = ["ClassicBitsliced"]
