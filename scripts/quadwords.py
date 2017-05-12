@@ -40,7 +40,8 @@ def measure_quadwords(experiment, iterations):
     open(os.path.join(bf_index_path, "ShardDefinition.csv"), "w").close()
 
     # Make the repl script
-    query_log = os.path.join(bf_index_path, "single-term-queries.txt")
+    # query_log = os.path.join(bf_index_path, "single-term-queries.txt")
+    query_log = experiment.filtered_query_file
 
     repl_script = os.path.join(bf_index_path, "repl-script")
     print(repl_script)
@@ -129,5 +130,5 @@ experiment_windows_273_1024_2047 = Experiment(
 )
 
 # generate_query_log(experiment_windows_273_1024_2047, 20000)
-# measure_quadwords(experiment_windows_273_1024_2047, 9)
+measure_quadwords(experiment_windows_273_1024_2047, 9)
 analyze_quadwords(experiment_windows_273_1024_2047, 9)
