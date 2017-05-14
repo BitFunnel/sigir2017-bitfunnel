@@ -14,7 +14,11 @@ experiment_dl_linux = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"/home/danluu/dev/what-is-this",
+    # 128,
+    # 255,
     # r"273-128-255",
+    2048,
+    4095,
     r"273-2048-4095",
 
     # The directory with the gov2 chunks and the regular expression pattern

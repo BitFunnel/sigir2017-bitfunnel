@@ -20,6 +20,8 @@ class Experiment:
                  mg4j_repo,
                  pef_executables,
                  index_root,
+                 min_term_count,
+                 max_term_count,
                  basename,
                  chunk_dir,
                  chunk_pattern,
@@ -33,6 +35,9 @@ class Experiment:
         self.pef_executable = pef_executables
 
         self.index_root = index_root
+
+        self.min_term_count = min_term_count
+        self.max_term_count = max_term_count
 
         self.chunk_dir = chunk_dir
         self.chunk_pattern = chunk_pattern
@@ -232,15 +237,20 @@ class Experiment:
         return results
 
 
-    def analyze_bf_corpus(self, gov2_directories, min_terms_per_document, max_terms_per_document):
-        results = CorpusCharacteristics(gov2_directories, min_terms_per_document, max_terms_per_document)
+    def analyze_bf_corpus(self, gov2_directories):
+        results = CorpusCharacteristics(gov2_directories, self.min_term_count, self.max_term_count)
 
-        with open(self.bf_build_statistics_log, 'r') as myfile:
-            build_statistics_log = myfile.read()
+        with open(self.bf_build_statistics_log, 'r') as input:
+            build_statistics_log = input.read()
             results.set_int_field("documents", "Document count:", build_statistics_log)
             results.set_int_field("terms", "Raw DocumentFrequencyTable count:", build_statistics_log)
             results.set_int_field("postings", "Posting count:", build_statistics_log)
             results.set_int_field("bytes", "Total bytes read:", build_statistics_log)
+
+        run_queries_log_file = os.path.join(self.bf_index_path, "results-1", "QuerySummaryStatistics.txt")
+        with open(run_queries_log_file) as input:
+            run_log = input.read()
+            results.set_float_field("matches_per_query", "MPQ:", run_log)
 
         return results
 
@@ -701,7 +711,12 @@ class CorpusCharacteristics(object):
         self.terms = math.nan
         self.postings = math.nan
         self.bytes = math.nan
+        self.matches_per_query = math.nan
 
     def set_int_field(self, property, text, log_data):
         value = int(re.findall("{0} (\d+\.?\d+)".format(text), log_data)[0])
+        setattr(self, property, value)
+
+    def set_float_field(self, property, text, log_data):
+        value = float(re.findall("{0} (\d+\.?\d+(?:e[+-]?\d+)?)".format(text), log_data)[0])
         setattr(self, property, value)

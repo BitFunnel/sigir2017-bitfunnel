@@ -1,5 +1,6 @@
 from build_filtered_chunks import process_chunk_list
 from experiment import Experiment
+from latex import latex_corpora, latex_performance
 
 
 ###########################################################################
@@ -16,6 +17,8 @@ experiment_windows_273_150_100 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
+    100,
+    150,
     r"273-150-100",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -41,6 +44,8 @@ experiment_windows_273_64_127 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
+    64,
+    127,
     r"273-64-127",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -66,6 +71,8 @@ experiment_windows_273_128_255 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
+    128,
+    255,
     r"273_128_255",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -91,6 +98,8 @@ experiment_windows_273_1000_1500 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
+    1000,
+    1500,
     r"273-1000-1500",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -115,6 +124,8 @@ experiment_windows_273_1024_2047 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
+    1024,
+    2047,
     r"273-1024-2047",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -140,6 +151,8 @@ experiment_windows_273_2048_4095 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"D:\temp\indexes",
+    2048,
+    4095,
     r"273-2048-4095",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -157,7 +170,7 @@ experiment_windows_273_2048_4095 = Experiment(
 )
 
 
-experiment_windows_273_64_127 = Experiment(
+experiment_linux_273_64_127 = Experiment(
     # Paths to tools
     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
     r"/home/mhop/git/mg4j-workbench",
@@ -165,6 +178,8 @@ experiment_windows_273_64_127 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"/mnt/d/temp/indexes",
+    64,
+    127,
     r"273-64-127",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -182,7 +197,7 @@ experiment_windows_273_64_127 = Experiment(
 )
 
 
-experiment_linux_273_2048_4095 = Experiment(
+experiment_linux_273_128_255 = Experiment(
     # Paths to tools
     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
     r"/home/mhop/git/mg4j-workbench",
@@ -190,11 +205,13 @@ experiment_linux_273_2048_4095 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"/mnt/d/temp/indexes",
-    r"273-2048-4095",
+    128,
+    255,
+    r"273_128_255",
 
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
-    r"/mnt/d/sigir/chunks-2048-4095",
+    r"/mnt/d/sigir/chunks-128-255",
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
@@ -215,6 +232,8 @@ experiment_linux_273_1024_2047 = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"/mnt/d/temp/indexes",
+    1024,
+    2047,
     r"273-1024-2047",
 
     # The directory with the gov2 chunks and the regular expression pattern
@@ -232,7 +251,7 @@ experiment_linux_273_1024_2047 = Experiment(
 )
 
 
-experiment_linux = Experiment(
+experiment_linux_273_2048_4095 = Experiment(
     # Paths to tools
     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
     r"/home/mhop/git/mg4j-workbench",
@@ -240,12 +259,14 @@ experiment_linux = Experiment(
 
     # The directory containing all indexes and the basename for this index
     r"/mnt/d/temp/indexes",
-    r"273-150-100",
+    2048,
+    4095,
+    r"273-2048-4095",
 
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
-    r"/mnt/d/sigir/chunks-100-150",
-    r"GX000.*",  # Use all chunks
+    r"/mnt/d/sigir/chunks-2048-4095",
+    r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
     r"/mnt/d/sigir/queries/06.efficiency_topics.all",
@@ -255,6 +276,33 @@ experiment_linux = Experiment(
     1,
     8
 )
+
+
+# experiment_linux = Experiment(
+#     # Paths to tools
+#     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
+#     r"/home/mhop/git/mg4j-workbench",
+#     r"/home/mhop/git/partitioned_elias_fano/bin",
+#
+#     # The directory containing all indexes and the basename for this index
+#     r"/mnt/d/temp/indexes",
+#     100,
+#     150,
+#     r"273-150-100",
+#
+#     # The directory with the gov2 chunks and the regular expression pattern
+#     # used to determine which chunks will be used for this experiment.
+#     r"/mnt/d/sigir/chunks-100-150",
+#     r"GX000.*",  # Use all chunks
+#
+#     # The query log to be used for this experiment.
+#     r"/mnt/d/sigir/queries/06.efficiency_topics.all",
+#
+#     # Min and max thread counts
+#     8,
+#     1,
+#     8
+# )
 
 
 def runxxx(experiment):
@@ -287,8 +335,17 @@ def runxxx(experiment):
     # print()
 
 
+def run_windows(experiment):
+    experiment.run_bf_queries()
+    experiment.run_lucene_queries()
+    experiment.run_mg4j_queries()
+
+def run_linux(experiment):
+    experiment.run_pef_queries()
+
+
 def linux(experiment):
-    experiment.build_pef_index()
+#    experiment.build_pef_index()
     experiment.run_pef_queries()
 
 
@@ -302,6 +359,15 @@ def finish(experiment):
 #                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
 #                    64,
 #                    127,
+#                    8)
+
+
+# process_chunk_list(r"d:\data\gov2",
+#                    r"d:\temp\chunks",
+#                    r"D:\git\mg4j-workbench",
+#                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+#                    256,
+#                    511,
 #                    8)
 
 
@@ -341,9 +407,33 @@ def finish(experiment):
 
 # runxxx(experiment_windows_273_2048_4095)
 # linux(experiment_linux_273_2048_4095)
-finish(experiment_windows_273_2048_4095)
+# finish(experiment_windows_273_2048_4095)
 
-# latex_corpora([
-#     experiment_windows_273_150_100.analyze_bf_corpus(273, 100, 150),
-#     experiment_windows_273_128_255.analyze_bf_corpus(273, 128, 255),
-#     experiment_windows_273_1024_2047.analyze_bf_corpus(273, 1024, 2047)])
+# print()
+
+# runxxx(experiment_windows_273_64_127)
+# linux(experiment_linux_273_64_127)
+# experiment_windows_273_64_127.run_lucene_queries()
+# finish(experiment_windows_273_64_127)
+
+experiments = [
+    experiment_windows_273_64_127,
+    experiment_windows_273_128_255,
+    experiment_windows_273_1024_2047,
+    experiment_windows_273_2048_4095]
+
+latex_corpora(experiments)
+
+latex_performance(experiments)
+
+
+# run_windows(experiment_windows_273_64_127)
+# run_windows(experiment_windows_273_128_255)
+# run_windows(experiment_windows_273_1024_2047)
+# run_windows(experiment_windows_273_2048_4095)
+
+# run_linux(experiment_linux_273_64_127)
+# run_linux(experiment_linux_273_128_255)
+# run_linux(experiment_linux_273_1024_2047)
+# run_linux(experiment_linux_273_2048_4095)
+
