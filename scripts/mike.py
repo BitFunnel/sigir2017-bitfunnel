@@ -1,5 +1,6 @@
 from build_filtered_chunks import process_chunk_list
 from experiment import Experiment
+from innovations import measure_innovations, analyze_innovations
 from latex import latex_corpora, latex_performance
 
 
@@ -78,6 +79,33 @@ experiment_windows_273_128_255 = Experiment(
     # The directory with the gov2 chunks and the regular expression pattern
     # used to determine which chunks will be used for this experiment.
     r"d:\sigir\chunks-128-255",
+    r"GX.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
+    r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # Min and max thread counts
+    8,
+    1,
+    8
+)
+
+
+experiment_windows_273_256_511 = Experiment(
+    # Paths to tools
+    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+    r"D:\git\mg4j-workbench",
+    r"/home/mhop/git/partitioned_elias_fano/bin",
+
+    # The directory containing all indexes and the basename for this index
+    r"D:\temp\indexes",
+    256,
+    511,
+    r"273-256-511",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"d:\sigir\chunks-256-511",
     r"GX.*",  # Use all chunks
 
     # The query log to be used for this experiment.
@@ -224,6 +252,35 @@ experiment_linux_273_128_255 = Experiment(
 )
 
 
+experiment_linux_273_256_511 = Experiment(
+    # Paths to tools
+    r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
+    r"/home/mhop/git/mg4j-workbench",
+    r"/home/mhop/git/partitioned_elias_fano/bin",
+
+    # The directory containing all indexes and the basename for this index
+    r"/mnt/d/temp/indexes",
+    256,
+    511,
+    r"273-256-511",
+
+    # The directory with the gov2 chunks and the regular expression pattern
+    # used to determine which chunks will be used for this experiment.
+    r"/mnt/d/sigir/chunks-256-511",
+    r"GX.*",  # Use all chunks
+
+    # The query log to be used for this experiment.
+    r"/mnt/d/sigir/queries/06.efficiency_topics.all",
+
+    # Min and max thread counts
+    8,
+    1,
+    8
+)
+
+
+
+
 experiment_linux_273_1024_2047 = Experiment(
     # Paths to tools
     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
@@ -319,8 +376,8 @@ def runxxx(experiment):
     # experiment.build_bf_index()
     # experiment.build_lucene_index()
     # experiment.build_pef_collection()
-    # # experiment.build_pef_index()
-    #
+    # # # experiment.build_pef_index()
+    # #
     # # Must filter the query log before running any queries.
     # experiment.filter_query_log()
     #
@@ -345,7 +402,7 @@ def run_linux(experiment):
 
 
 def linux(experiment):
-#    experiment.build_pef_index()
+    experiment.build_pef_index()
     experiment.run_pef_queries()
 
 
@@ -359,15 +416,6 @@ def finish(experiment):
 #                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
 #                    64,
 #                    127,
-#                    8)
-
-
-# process_chunk_list(r"d:\data\gov2",
-#                    r"d:\temp\chunks",
-#                    r"D:\git\mg4j-workbench",
-#                    r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
-#                    256,
-#                    511,
 #                    8)
 
 
@@ -405,6 +453,9 @@ def finish(experiment):
 # runxxx(experiment_windows_273_1024_2047)
 # runxxx(experiment_linux_273_1024_2047)
 
+# runxxx(experiment_windows_273_256_511)
+# linux(experiment_linux_273_256_511)
+
 # runxxx(experiment_windows_273_2048_4095)
 # linux(experiment_linux_273_2048_4095)
 # finish(experiment_windows_273_2048_4095)
@@ -416,15 +467,30 @@ def finish(experiment):
 # experiment_windows_273_64_127.run_lucene_queries()
 # finish(experiment_windows_273_64_127)
 
+
+def run_innovations(experiments):
+    labels = ["BSS", "BSS-FC", "BTFNL"]
+    treatments = ["ClassicBitsliced", "PrivateSharedRank0", "Optimal"]
+    densities = [0.05, 0.10, 0.15, 0.20, 0.25, 0.3, 0.35]
+
+    # for experiment in experiments:
+    #     measure_innovations(experiment, treatments, densities)
+
+    for experiment in experiments:
+        analyze_innovations(experiment, labels, treatments, densities)
+
+
 experiments = [
     experiment_windows_273_64_127,
     experiment_windows_273_128_255,
+    experiment_windows_273_256_511,
     experiment_windows_273_1024_2047,
     experiment_windows_273_2048_4095]
 
-latex_corpora(experiments)
+# latex_corpora(experiments)
+# latex_performance(experiments)
 
-latex_performance(experiments)
+# run_innovations(experiments)
 
 
 # run_windows(experiment_windows_273_64_127)
