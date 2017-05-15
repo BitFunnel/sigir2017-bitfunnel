@@ -264,7 +264,7 @@ class Experiment:
         if not os.path.exists(self.lucene_index_path):
             print("mkdir " + self.lucene_index_path)
             os.makedirs(self.lucene_index_path)
-        args = ("java -cp {0} "
+        args = ("java -cp {0} -Xmx25g "
                 "org.bitfunnel.runner.IndexBuilder "
                 "{1} {2} {3}").format(self.classpath,
                                       self.lucene_index_path,
