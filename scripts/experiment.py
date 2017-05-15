@@ -26,6 +26,7 @@ class Experiment:
                  chunk_dir,
                  chunk_pattern,
                  queries,
+                 bitfunnel_density,
                  ingestion_thread_count,
                  min_thread_count,
                  max_thread_count):
@@ -43,6 +44,8 @@ class Experiment:
         self.chunk_pattern = chunk_pattern
         self.basename = basename
         self.queries = queries;
+
+        self.bf_density = bitfunnel_density
 
         self.ingestion_thread_count = ingestion_thread_count
 
@@ -85,8 +88,6 @@ class Experiment:
         self.root_query_file = os.path.join(self.query_path, self.queries_basename)
 
         # BitFunnel variables
-        # TODO: don't hard code density.
-        self.bf_density = 0.15
         self.bf_repl_script = os.path.join(self.bf_index_path, self.basename + "-repl.script")
         self.bf_shard_definition = os.path.join(self.bf_index_path, "ShardDefinition.csv")
         self.bf_build_statistics_log = os.path.join(self.bf_index_path, "build_bf_statistics_log.txt")

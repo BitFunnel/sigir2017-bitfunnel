@@ -29,6 +29,9 @@ experiment_dl_linux = Experiment(
     # The query log to be used for this experiment.
     r"/home/danluu/Downloads/06.efficiency_topics.all",
 
+    # BitFunnel density
+    0.15,
+
     # Min and max thread counts
     8,
     1,

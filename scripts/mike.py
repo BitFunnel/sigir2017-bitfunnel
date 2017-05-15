@@ -30,6 +30,9 @@ experiment_windows_273_150_100 = Experiment(
     # The query log to be used for this experiment.
     r"D:\sigir\queries\06.efficiency_topics.all",
 
+    # BitFunnel density
+    0.15,
+
     # Min and max thread counts
     8,
     1,
@@ -56,6 +59,9 @@ experiment_windows_273_64_127 = Experiment(
 
     # The query log to be used for this experiment.
     r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # BitFunnel density
+    0.15,
 
     # Min and max thread counts
     8,
@@ -84,6 +90,9 @@ experiment_windows_273_128_255 = Experiment(
     # The query log to be used for this experiment.
     r"D:\sigir\queries\06.efficiency_topics.all",
 
+    # BitFunnel density
+    0.15,
+
     # Min and max thread counts
     8,
     1,
@@ -110,6 +119,9 @@ experiment_windows_273_256_511 = Experiment(
 
     # The query log to be used for this experiment.
     r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # BitFunnel density
+    0.15,
 
     # Min and max thread counts
     8,
@@ -138,6 +150,9 @@ experiment_windows_273_1000_1500 = Experiment(
     # The query log to be used for this experiment.
     r"D:\sigir\queries\06.efficiency_topics.all",
 
+    # BitFunnel density
+    0.15,
+
     # Min and max thread counts
     8,
     1,
@@ -163,6 +178,9 @@ experiment_windows_273_1024_2047 = Experiment(
 
     # The query log to be used for this experiment.
     r"D:\sigir\queries\06.efficiency_topics.all",
+
+    # BitFunnel density
+    0.15,
 
     # Min and max thread counts
     8,
@@ -218,6 +236,9 @@ experiment_linux_273_64_127 = Experiment(
     # The query log to be used for this experiment.
     r"/mnt/d/sigir/queries/06.efficiency_topics.all",
 
+    # BitFunnel density
+    0.15,
+
     # Min and max thread counts
     8,
     1,
@@ -245,6 +266,9 @@ experiment_linux_273_128_255 = Experiment(
     # The query log to be used for this experiment.
     r"/mnt/d/sigir/queries/06.efficiency_topics.all",
 
+    # BitFunnel density
+    0.15,
+
     # Min and max thread counts
     8,
     1,
@@ -271,6 +295,9 @@ experiment_linux_273_256_511 = Experiment(
 
     # The query log to be used for this experiment.
     r"/mnt/d/sigir/queries/06.efficiency_topics.all",
+
+    # BitFunnel density
+    0.15,
 
     # Min and max thread counts
     8,
@@ -300,6 +327,9 @@ experiment_linux_273_1024_2047 = Experiment(
 
     # The query log to be used for this experiment.
     r"/mnt/d/sigir/queries/06.efficiency_topics.all",
+
+    # BitFunnel density
+    0.15,
 
     # Min and max thread counts
     8,
@@ -333,33 +363,6 @@ experiment_linux_273_2048_4095 = Experiment(
     1,
     8
 )
-
-
-# experiment_linux = Experiment(
-#     # Paths to tools
-#     r"/home/mhop/git/BitFunnel/build-make/tools/BitFunnel/src/BitFunnel",
-#     r"/home/mhop/git/mg4j-workbench",
-#     r"/home/mhop/git/partitioned_elias_fano/bin",
-#
-#     # The directory containing all indexes and the basename for this index
-#     r"/mnt/d/temp/indexes",
-#     100,
-#     150,
-#     r"273-150-100",
-#
-#     # The directory with the gov2 chunks and the regular expression pattern
-#     # used to determine which chunks will be used for this experiment.
-#     r"/mnt/d/sigir/chunks-100-150",
-#     r"GX000.*",  # Use all chunks
-#
-#     # The query log to be used for this experiment.
-#     r"/mnt/d/sigir/queries/06.efficiency_topics.all",
-#
-#     # Min and max thread counts
-#     8,
-#     1,
-#     8
-# )
 
 
 def runxxx(experiment):
