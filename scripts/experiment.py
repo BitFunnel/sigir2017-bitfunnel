@@ -682,6 +682,14 @@ class IndexCharacteristics(object):
             print("ERROR: failed to extract", text, log_data)
 
 
+    def best_qps(self):
+        return max(self.qps)
+
+
+    def best_threads(self):
+        return self.qps.index(max(self.qps))
+
+
     def print(self):
         print("Index type: {0}".format(self.index_type))
         print("Bits/posting: {0}".format(self.bits_per_posting))
