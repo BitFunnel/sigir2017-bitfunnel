@@ -27,7 +27,7 @@ class Builder:
         # arguments.
         self.temp = os.path.join(root, "tempxxx-{0}".format(self.thread_id));
         self.chunkdir = os.path.join(root, "chunks")
-        self.classpath = os.path.join(self.mg4j, "target", "mg4j-1.0-SNAPSHOT-jar-with-dependencies.jar")
+        self.classpath = os.path.join(self.mg4j, "target", "mg4j-1.0-SNAPSHOT.jar")
 
         if not os.path.exists(self.chunkdir):
             print("mkdir " + self.chunkdir)

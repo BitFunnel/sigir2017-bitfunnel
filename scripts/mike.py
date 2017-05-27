@@ -419,6 +419,14 @@ def finish(experiment):
     experiment.summarize(7)
 
 
+process_chunk_list(r"d:\data\gov2",
+                   r"d:\temp\chunks",
+                   r"D:\git\mg4j-workbench",
+                   r"D:\git\BitFunnel\build-msvc\tools\BitFunnel\src\Release\BitFunnel.exe",
+                   0,
+                   100000,
+                   8)
+
 # process_chunk_list(r"d:\data\gov2",
 #                    r"d:\temp\chunks",
 #                    r"D:\git\mg4j-workbench",
