@@ -5,6 +5,7 @@ import os
 import platform
 import re
 from bf_utilities import run
+from shutil import copyfile
 
 
 def execute(command, log_file = None):
@@ -29,7 +30,8 @@ class Experiment:
                  bitfunnel_density,
                  ingestion_thread_count,
                  min_thread_count,
-                 max_thread_count):
+                 max_thread_count,
+                 bitfunnel_buffer_size = None):
 
         self.bf_executable = bf_executables
         self.mg4j_repo = mg4j_repo
@@ -51,6 +53,9 @@ class Experiment:
 
         self.min_thread_count = min_thread_count
         self.max_thread_count = max_thread_count
+
+        self.bf_buffer_size = bitfunnel_buffer_size
+
         self.pef_index_type = 'opt'
 
         self.update()
@@ -116,7 +121,7 @@ class Experiment:
             filename = "run_mg4j_queries_log-{0}.txt".format(threads)
             self.mg4j_run_queries_log.append(os.path.join(self.mg4j_index_path, filename))
 
-        # Partitioned ELias-Fano variables
+        # Partitioned Elias-Fano variables
         self.pef_basename = os.path.join(self.pef_index_path, self.basename)
         self.pef_collection = os.path.join(self.pef_index_path, self.basename)
         # TODO: don't hard-code opt
@@ -169,8 +174,13 @@ class Experiment:
             os.makedirs(self.bf_index_path)
 
         # We're currently restricted to a single shard,
-        # so create an empty ShardDefinition file.
-        open(self.bf_shard_definition, "w").close()
+        # so create a ShardDefinition file with a single shard that accepts
+        # documents with any posting count. Note that this experiment assumes
+        # that the corpus has already been filtered to the desired posting
+        # count range.
+        with open(self.bf_shard_definition, "w") as file:
+            file.write("MinPostings,Density\n")
+            file.write("0,{0}\n".format(self.bf_density))
 
         # Run statistics builder
         args = ("{0} statistics {1} {2} -text").format(self.bf_executable,
@@ -207,9 +217,12 @@ class Experiment:
             file.write("quit\n")
 
         # Start BitFunnel repl
-        args = ("{0} repl {1} -script {2}").format(self.bf_executable,
-                                                   self.bf_index_path,
-                                                   self.bf_repl_script)
+        buffer_size_arg = "-memory {0}".format(self.bf_buffer_size) if self.bf_buffer_size else ""
+
+        args = ("{0} repl {1} -script {2} {3}").format(self.bf_executable,
+                                                       self.bf_index_path,
+                                                       self.bf_repl_script,
+                                                       buffer_size_arg)
         execute(args, self.bf_run_queries_log)
 
 
@@ -350,6 +363,9 @@ class Experiment:
             execute(args, self.mg4j_run_queries_log[i])
 
 
+    # This function uses MG4J to produce a filtered query log where every query
+    # term appears somewhere in the index. Partitioned Elias Fano requires a
+    # filtered query log.
     def filter_query_log(self):
         args = ("java -Xmx16g -cp {0} "
                 "org.bitfunnel.reproducibility.IndexExporter "
@@ -359,6 +375,16 @@ class Experiment:
                                         self.query_path,
                                         self.root_query_file);
         execute(args, self.mg4j_filter_queries_log)
+
+
+    # Temporary function used to simulate filtering the query log.
+    # This function is used avoid MG4J query processing time when one does not
+    # require a filtered query log. The filtered query log is only required
+    # when running Partitioned Elias-Fano, which requires that all query terms
+    # appear in the index.
+    def simulate_filter_query_log(self):
+        print("Simulating query log filtering.")
+        copyfile(self.root_query_file, os.path.join(self.query_path, self.queries_basename + "-in-index.txt"))
 
 
     def analyze_mg4j_index(self):

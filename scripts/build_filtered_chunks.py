@@ -2,6 +2,7 @@ import errno
 import os
 import platform
 import queue
+import re
 import shutil
 import stat
 import threading
@@ -90,13 +91,13 @@ class Builder:
     def create_chunk_manifest(self, chunk):
         # Create the manifest file
         input = os.path.join(self.temp, chunk + ".chunk")
-        output = os.path.join(self.temp, "Manifest.txt")
+        output = os.path.join(self.temp, "UnfilteredChunks.txt")
         with open(output, 'w') as file:
             file.write(input + '\n')
 
 
     def create_filtered_chunk(self, chunk):
-        manifest = os.path.join(self.temp, "Manifest.txt")
+        manifest = os.path.join(self.temp, "UnfilteredChunks.txt")
         args = ("{0} filter {1} {2} -size {3} {4}").format(
             self.bitfunnel, manifest, self.temp, self.min_postings, self.max_postings)
         print(args)
@@ -165,11 +166,14 @@ class Builder:
             self.process_one_chunk(chunk)
 
 
-def process_chunk_list(gov2, root, mg4j, bitfunnel, min_postings, max_postings, thread_count):
+def process_chunk_list(gov2, filter, root, mg4j, bitfunnel, min_postings, max_postings, thread_count):
     q = queue.Queue()
 
-    basenames = [os.path.splitext(f)[0] for f in os.listdir(gov2) if
-                 os.path.isfile(os.path.join(gov2, f)) and f.endswith('.7z')]
+    unfiltered_basenames = [os.path.splitext(f)[0] for f in os.listdir(gov2) if
+                            os.path.isfile(os.path.join(gov2, f)) and f.endswith('.7z')]
+
+    r = re.compile(filter)
+    basenames = [x for x in unfiltered_basenames if r.match(x)]
 
     print("Processing {0} chunks.".format(len(basenames)))
 
@@ -186,3 +190,4 @@ def process_chunk_list(gov2, root, mg4j, bitfunnel, min_postings, max_postings, 
     q.join()
 
     print("All threads finished.")
+
