@@ -160,8 +160,16 @@ def append_document(id,
                     writer):
     writer.on_document_enter(id)
 
+    # Keep track of the number of terms added.
+    term_count = 0;
+
+    # Write the title, which takes the form "tID" where ID is the document's id.
+    # The title format is chosen so that it is different from every other term
+    # in the document.
+    title = 't{0}'.format(id)
     writer.on_stream_enter(1)
-    writer.on_term(str(id))
+    writer.on_term(title)
+    term_count += 1
     writer.on_stream_exit()
 
     writer.on_stream_enter(0)
@@ -170,13 +178,12 @@ def append_document(id,
     # in this document.
     term_target = random.randrange(min_terms, max_terms + 1)
 
-    # First, generate terms corresponding to bits that are set in the
+    # Now, generate terms corresponding to bits that are set in the
     # document id. These terms can be used to easily verify the that the
     # matcher returns the correct set of documents.
     # For each id bit B that is set, add a term of the form "xB".
-    term_count = 0;
     x = id
-    for i in range(0, 4):
+    for i in range(0, 64):
         if x % 2 != 0:
             term = "x{0}".format(i)
             writer.on_term(term)
@@ -207,13 +214,13 @@ def append_document(id,
 #
 # The number of unique terms in the document will be in the range
 #   [min_terms, max_terms]
-# Note that min_terms cannot be less than 64. The reason for this restriction
-# is that each synthetic document contains a term corresponding to each bit
-# that is set in the binary representation of the 64-bit document it. These
-# terms are used to simplify the verification of correctness of the matching
-# algorithm. These terms are encoded as "xB" where B is the integer bit
-# position. So, for example, the document with id=9 would contain the terms
-# "x0" and "x3".
+# Note that min_terms cannot be less than 65. The reason for this restriction
+# is that each synthetic document contains a term corresponding to the document
+# id and each bit that is set in the binary representation of the 64-bit
+# document id. These terms are used to simplify the verification of correctness
+# of the matching algorithm. These terms are encoded as "xB" where B is the
+# integer bit position. So, for example, the document with id=9 would contain
+# the terms "x0" and "x3".
 #
 # Terms not corresponding to bit positions are selected from a Zipfian
 # distribution. Note that terms in a document won't have a perfect Zipfian
@@ -227,7 +234,7 @@ def create_index(path,
                  max_terms,
                  writer):
 
-    if min_terms < 64:
+    if min_terms < 65:
         raise ValueError("min_terms cannot be less than 64.")
 
     if max_terms < min_terms:
@@ -236,6 +243,7 @@ def create_index(path,
     # Ensure that the function generates same index for each call with the
     # same parameters.
     random.seed(1234567)
+    numpy.random.seed(1234567)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -257,10 +265,28 @@ def create_index(path,
 
 
 
+# create_index(r'c:\temp\corpus',
+#              'chunk',
+#              3,
+#              5,
+#              64,
+#              127,
+#              ChunkWriter())
+
+
 create_index(r'c:\temp\corpus',
              'chunk',
-             3,
-             5,
-             64,
+             1,
+             1000,
+             65,
              127,
              ChunkWriter())
+
+
+# create_index(r'c:\temp\corpus',
+#              'chunk',
+#              1,
+#              4,
+#              10,
+#              10,
+#              ChunkWriter())
