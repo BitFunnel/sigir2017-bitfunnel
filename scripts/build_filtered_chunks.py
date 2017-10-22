@@ -174,6 +174,7 @@ def process_chunk_list(gov2, filter, root, mg4j, bitfunnel, min_postings, max_po
 
     r = re.compile(filter)
     basenames = [x for x in unfiltered_basenames if r.match(x)]
+    basenames.sort()
 
     print("Processing {0} chunks.".format(len(basenames)))
 

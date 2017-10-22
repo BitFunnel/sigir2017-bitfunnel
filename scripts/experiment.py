@@ -497,6 +497,7 @@ class Experiment:
                   for root, dirs, files in os.walk(self.chunk_dir)
                   for f in files
                   if regex.search(f) is not None]
+        chunks.sort()
 
         for chunk in chunks:
             print(chunk)
