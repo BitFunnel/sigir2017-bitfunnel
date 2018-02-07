@@ -63,7 +63,7 @@ class Builder:
                    os.path.isfile(os.path.join(input, f)) and f.endswith('.txt')]
         print("  Creating mg4j collection from " + input)
 
-        input = os.path.join(self.temp, chunk, "0*.txt")        # TEMPORARY - filter to first 10 .txt files.
+        input = os.path.join(self.temp, chunk, "*.txt")
         output = os.path.join(self.temp, chunk + ".collection")
         if (platform.system() == 'Windows'):
             command = "dir /s/b"
@@ -95,14 +95,6 @@ class Builder:
         run(args, self.temp);
 
 
-    # def create_chunk_manifest(self, chunk):
-    #     # Create the manifest file
-    #     input = os.path.join(self.temp, chunk + ".chunk")
-    #     output = os.path.join(self.temp, "UnfilteredChunks.txt")
-    #     with open(output, 'w') as file:
-    #         file.write(input + '\n')
-
-
     def create_filtered_chunk(self, chunk):
         unfiltered = os.path.join(self.temp, chunk + ".chunk")
 
@@ -124,20 +116,11 @@ class Builder:
 
             # Rename filtered chunk file.
             old_name = os.path.join(self.temp, "Chunk-0.chunk")
-#            new_name = os.path.join(self.chunkdir,
-#                                    "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings))
         else:
             # Just use the unfiltered file.
             old_name = unfiltered
-#            new_name = os.path.join(self.chunkdir, "{0}-unfiltered-sampled.chunk".format(chunk))
 
         os.rename(old_name, self.chunk_name(chunk))
-
-
-    # def rename_filtered_chunk(self, chunk):
-    #     old_name = os.path.join(self.temp, "Chunk-0.chunk")
-    #     new_name = os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings))
-    #     os.rename(old_name, new_name)
 
 
     def cleanup(self):
@@ -172,9 +155,7 @@ class Builder:
             self.decompress(chunk)
             self.build_collection(chunk)
             self.create_chunk(chunk)
-#            self.create_chunk_manifest(chunk)
             self.create_filtered_chunk(chunk)
-#            self.rename_filtered_chunk(chunk)
             self.cleanup()
 
 
@@ -219,4 +200,3 @@ def process_chunk_list(gov2, filter, root, mg4j, bitfunnel, min_postings, max_po
     q.join()
 
     print("All threads finished.")
-
