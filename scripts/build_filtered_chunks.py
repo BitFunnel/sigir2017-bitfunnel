@@ -35,6 +35,13 @@ class Builder:
             os.makedirs(self.chunkdir)
 
 
+    def chunk_name(self, chunk):
+        if self.min_postings is not None:
+            return os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings));
+        else:
+            return os.path.join(self.chunkdir, "{0}-unfiltered-sampled.chunk".format(chunk))
+
+
     def make_temp_dir(self):
         if not os.path.exists(self.temp):
             print("mkdir " + self.temp)
@@ -56,7 +63,7 @@ class Builder:
                    os.path.isfile(os.path.join(input, f)) and f.endswith('.txt')]
         print("  Creating mg4j collection from " + input)
 
-        input = os.path.join(self.temp, chunk, "*.txt")
+        input = os.path.join(self.temp, chunk, "0*.txt")        # TEMPORARY - filter to first 10 .txt files.
         output = os.path.join(self.temp, chunk + ".collection")
         if (platform.system() == 'Windows'):
             command = "dir /s/b"
@@ -88,27 +95,49 @@ class Builder:
         run(args, self.temp);
 
 
-    def create_chunk_manifest(self, chunk):
-        # Create the manifest file
-        input = os.path.join(self.temp, chunk + ".chunk")
-        output = os.path.join(self.temp, "UnfilteredChunks.txt")
-        with open(output, 'w') as file:
-            file.write(input + '\n')
+    # def create_chunk_manifest(self, chunk):
+    #     # Create the manifest file
+    #     input = os.path.join(self.temp, chunk + ".chunk")
+    #     output = os.path.join(self.temp, "UnfilteredChunks.txt")
+    #     with open(output, 'w') as file:
+    #         file.write(input + '\n')
 
 
     def create_filtered_chunk(self, chunk):
-        manifest = os.path.join(self.temp, "UnfilteredChunks.txt")
-        args = ("{0} filter {1} {2} -size {3} {4}").format(
-            self.bitfunnel, manifest, self.temp, self.min_postings, self.max_postings)
-        print(args)
+        unfiltered = os.path.join(self.temp, chunk + ".chunk")
 
-        run(args, self.temp);
+        if self.min_postings is not None:
+            # Filter the chunk file
+
+            # Create the manifest file
+            output = os.path.join(self.temp, "UnfilteredChunks.txt")
+            with open(output, 'w') as file:
+                file.write(unfiltered + '\n')
+
+            # Create filtered chunk file.
+            manifest = os.path.join(self.temp, "UnfilteredChunks.txt")
+            args = ("{0} filter {1} {2} -size {3} {4}").format(
+                self.bitfunnel, manifest, self.temp, self.min_postings, self.max_postings)
+            print(args)
+
+            run(args, self.temp)
+
+            # Rename filtered chunk file.
+            old_name = os.path.join(self.temp, "Chunk-0.chunk")
+#            new_name = os.path.join(self.chunkdir,
+#                                    "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings))
+        else:
+            # Just use the unfiltered file.
+            old_name = unfiltered
+#            new_name = os.path.join(self.chunkdir, "{0}-unfiltered-sampled.chunk".format(chunk))
+
+        os.rename(old_name, self.chunk_name(chunk))
 
 
-    def rename_filtered_chunk(self, chunk):
-        old_name = os.path.join(self.temp, "Chunk-0.chunk")
-        new_name = os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings))
-        os.rename(old_name, new_name)
+    # def rename_filtered_chunk(self, chunk):
+    #     old_name = os.path.join(self.temp, "Chunk-0.chunk")
+    #     new_name = os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings))
+    #     os.rename(old_name, new_name)
 
 
     def cleanup(self):
@@ -133,19 +162,19 @@ class Builder:
     def process_one_chunk(self, chunk):
         print("Building chunk " + chunk)
 
-        chunk_name = os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings));
+        # chunk_name = os.path.join(self.chunkdir, "{0}-{1}-{2}.chunk".format(chunk, self.min_postings, self.max_postings));
 
         # Only build chunk if it doesn't already exist.
         # This helps with restarting long runs that fail in the middle.
-        if (not os.path.exists(chunk_name)):
+        if (not os.path.exists(self.chunk_name(chunk))):
             self.cleanup()
             self.make_temp_dir()
             self.decompress(chunk)
             self.build_collection(chunk)
             self.create_chunk(chunk)
-            self.create_chunk_manifest(chunk)
+#            self.create_chunk_manifest(chunk)
             self.create_filtered_chunk(chunk)
-            self.rename_filtered_chunk(chunk)
+#            self.rename_filtered_chunk(chunk)
             self.cleanup()
 
 
